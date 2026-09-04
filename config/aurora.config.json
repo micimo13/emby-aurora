@@ -1,0 +1,49 @@
+{
+  "basePath": "aurora",
+
+  "loading": {
+    "enabled": true,
+    "style": "aurora",
+    "slogan": "EMBY · AURORA",
+    "aurora": {
+      "blob1": "#6d5dfc",
+      "blob2": "#22d3ee",
+      "blob3": "#f472b6"
+    }
+  },
+
+  "theme": {
+    "name": "aurora",
+    "accent": "#6d5dfc"
+  },
+
+  "logo": {
+    "type": "image",
+    "imageUrl": "",
+    "text": "AURORA",
+    "color": "#ffffff",
+    "fontSize": 34,
+    "header": true,
+    "keepText": false
+  },
+
+  "carousel": {
+    "enabled": true,
+    "interval": 8000,
+    "maxCount": 8
+  },
+
+  "features": {
+    "danmaku": false,
+    "douban": false,
+    "speed": true,
+    "extplayer": false,
+    "fluent": true,
+
+    "ratingSource": "bangumi",
+    "doubanApi": "",
+    "danmakuApi": "",
+    "externalScheme": "potplayer",
+    "danmakuSpeed": 9
+  }
+}
