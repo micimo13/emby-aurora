@@ -58,14 +58,14 @@
     l.id = id;
     l.rel = 'stylesheet';
     l.href = href;
-    doc.head.appendChild(l);
+    (doc.head || doc.documentElement).appendChild(l);
   }
   function loadJS(src, cb) {
     var s = doc.createElement('script');
     s.src = src;
     s.async = false;
     if (cb) s.onload = cb;
-    doc.head.appendChild(s);
+    (doc.head || doc.documentElement).appendChild(s);
   }
 
   /* =========================================================================
@@ -286,31 +286,45 @@
     injectCSS('aurora-loading-css', loadingCSS + cinemaCSS + minimalCSS);
 
     // 2) 挂载加载页（立即、同步，保证首帧）
-    var loadingEl = buildLoading();
-    doc.body.appendChild(loadingEl);
-    // 强制回流后显示，触发淡入
-    loadingEl.offsetHeight;
-    loadingEl.classList.add('is-show');
+    // 注入点在 </head> 之前，此刻 document.body 尚未创建，故回退到 documentElement，
+    // 否则 body 为 null 会抛 TypeError 并中断整个脚本。
+    var loadingEl = null;
+    if (!(LOADING.enabled === false || LOADING.enabled === 'false')) {
+      loadingEl = buildLoading();
+      (doc.body || doc.documentElement).appendChild(loadingEl);
+      // 强制回流后显示，触发淡入
+      loadingEl.offsetHeight;
+      loadingEl.classList.add('is-show');
+    }
 
     // 3) 应用主题（异步加载 CSS，不阻塞加载页）
     applyTheme();
 
     // 4) 等待 Emby 就绪后收尾
     waitForEmby(function () {
+      // 先标记就绪：此后动态加载的功能模块（carousel/speed/... 异步注入）调用
+      // AURORA.onReady 时会立即执行，避免「模块加载晚于回调派发」导致的回调丢失。
+      global.AURORA._ready = true;
       applyHeaderLogo();
       loadEnabledModules();
       // 淡出并移除加载页
-      loadingEl.classList.add('is-hide');
-      setTimeout(function () {
-        if (loadingEl.parentNode) loadingEl.parentNode.removeChild(loadingEl);
-      }, 420);
-      // 回调
+      if (loadingEl) {
+        loadingEl.classList.add('is-hide');
+        setTimeout(function () {
+          if (loadingEl.parentNode) loadingEl.parentNode.removeChild(loadingEl);
+        }, 420);
+      }
+      // 派发已排队的回调（通常为空，动态模块会在 _ready=true 后即时执行）
       each(onReady, function (fn) { try { fn(); } catch (e) {} });
+      onReady.length = 0;
     });
   }
 
   global.AURORA = global.AURORA || {};
-  global.AURORA.onReady = function (fn) { onReady.push(fn); };
+  global.AURORA.onReady = function (fn) {
+    if (global.AURORA._ready) { try { fn(); } catch (e) {} }
+    else { onReady.push(fn); }
+  };
 
   // 立即启动：bootstrap 注入在 </head> 前，documentElement 必然已存在，
   // 同步挂载加载页可做到「Emby 渲染任何内容前」即出现，杜绝白屏闪烁。
