@@ -140,18 +140,11 @@
   }
 
   function openItem(id, serverId, play) {
+    // 直接走 hash 路由：Emby 通过 hashchange 处理跳转，跨 4.8/4.9 稳定，
+    // 避免依赖 Emby.Page.show 的版本差异（其签名在不同版本间不一致，可能静默失效）。
     var hash = '#/item?id=' + encodeURIComponent(id);
     if (serverId) hash += '&serverId=' + encodeURIComponent(serverId);
     if (play) hash += '&autoplay=true';
-    // 优先用 Emby 路由，失败则回退 hash 跳转
-    try {
-      if (global.Emby && global.Emby.Page && global.Emby.Page.show) {
-        var params = { Id: id, serverId: serverId };
-        if (play) params.autoplay = true;
-        global.Emby.Page.show({ url: 'itemdetails.html', params: params });
-        return;
-      }
-    } catch (e) {}
     location.hash = hash;
   }
 
