@@ -1,0 +1,22 @@
+/*!
+ * EmbyAurora — 主题「影院黑金 Cinema」
+ * 21:9 影院质感，黑底 + 香槟金点缀
+ */
+:root {
+  --aurora-accent: #d4af37;
+  --aurora-accent-soft: rgba(212, 175, 55, .16);
+  --aurora-glass-bg: rgba(12, 10, 4, .62);
+  --aurora-glass-border: rgba(212, 175, 55, .16);
+  --aurora-glow: 0 0 0 1px #d4af37, 0 12px 44px -8px rgba(212, 175, 55, .45);
+  --aurora-scrollbar: rgba(212, 175, 55, .28);
+  --aurora-radius: 6px;
+}
+
+.skinHeader-withBackground {
+  background-image: linear-gradient(180deg, rgba(24, 20, 8, .75), rgba(0, 0, 0, .6)) !important;
+}
+
+.cardOverlayContainer:hover,
+.cardContent:hover {
+  box-shadow: 0 6px 22px rgba(0, 0, 0, .6), 0 0 0 1px rgba(212, 175, 55, .4);
+}
