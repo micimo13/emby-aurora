@@ -1,0 +1,111 @@
+/*!
+ * EmbyAurora — aurora.css
+ * =============================================================================
+ *  基础美化层：主题变量系统 + 通用视觉优化（毛玻璃 / 圆角 / 滚动条 / 过渡）
+ *  配色由 themes/*.css 通过覆盖 CSS 变量实现，本文件保持中性。
+ * =============================================================================
+ */
+
+/* ---------- 主题变量（供 themes/*.css 覆盖） ---------- */
+:root {
+  --aurora-accent: #6d5dfc;             /* 强调色 / 品牌色 */
+  --aurora-accent-soft: rgba(109, 93, 252, .18);
+  --aurora-radius: 14px;                /* 卡片圆角 */
+  --aurora-radius-sm: 8px;
+  --aurora-glass-bg: rgba(16, 18, 28, .55);
+  --aurora-glass-border: rgba(255, 255, 255, .08);
+  --aurora-blur: 18px;
+  --aurora-card-hover: 1.035;           /* 卡片 hover 缩放 */
+  --aurora-glow: 0 0 0 1px var(--aurora-accent), 0 10px 40px -8px var(--aurora-accent-soft);
+  --aurora-shadow: 0 6px 22px rgba(0, 0, 0, .45);
+  --aurora-scrollbar: rgba(255, 255, 255, .16);
+  --aurora-transition: .24s cubic-bezier(.4, 0, .2, 1);
+}
+
+/* ---------- 全局平滑 ---------- */
+body {
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* ---------- 卡片圆角与悬浮 ---------- */
+.cardContent,
+.cardBox,
+.cardOverlayContainer,
+.card {
+  border-radius: var(--aurora-radius) !important;
+  transition: transform var(--aurora-transition), box-shadow var(--aurora-transition) !important;
+}
+.cardOverlayContainer:hover,
+.cardContent:hover {
+  transform: translateY(-3px) scale(var(--aurora-card-hover));
+  box-shadow: var(--aurora-shadow);
+}
+.cardImageContainer,
+.cardPadder {
+  border-radius: var(--aurora-radius) var(--aurora-radius) 0 0;
+}
+.cardOverlayContainer .cardScalable {
+  border-radius: var(--aurora-radius);
+}
+
+/* ---------- 毛玻璃信息层 ---------- */
+.cardOverlayContainer .cardOverlayButtonContainer,
+.itemDetailPage .detailImageContainer,
+.layout-mobile .cardOverlayContainer {
+  backdrop-filter: blur(var(--aurora-blur));
+  -webkit-backdrop-filter: blur(var(--aurora-blur));
+}
+
+/* ---------- 顶栏毛玻璃 ---------- */
+.skinHeader-withBackground,
+.skinHeader.focuscontainer-x.skinHeader-withBackground {
+  background-color: var(--aurora-glass-bg) !important;
+  backdrop-filter: blur(var(--aurora-blur)) saturate(160%);
+  -webkit-backdrop-filter: blur(var(--aurora-blur)) saturate(160%);
+  border-bottom: 1px solid var(--aurora-glass-border);
+}
+
+/* ---------- 滚动条美化（细 + 圆角 + 悬浮高亮） ---------- */
+::-webkit-scrollbar { width: 9px; height: 9px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--aurora-scrollbar);
+  border-radius: 99px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover { background: var(--aurora-accent); background-clip: content-box; }
+
+/* ---------- 按钮 / 焦点态 ---------- */
+.button-flat:hover,
+.paper-icon-button-light:hover {
+  background-color: var(--aurora-accent-soft) !important;
+}
+
+/* ---------- 选中态品牌色 ---------- */
+.cardOverlayContainer.selectedCard {
+  box-shadow: var(--aurora-glow);
+}
+
+/* ---------- 背景虚化 ---------- */
+.backgroundContainer,
+.itemBackdrop {
+  filter: blur(14px) brightness(.72) saturate(1.1);
+  transform: scale(1.08);
+}
+
+/* ---------- 顶栏品牌色点缀 ---------- */
+.skinHeader .headerRight .emby-button:hover,
+.skinHeader .headerRight .paper-icon-button-light:hover {
+  color: var(--aurora-accent) !important;
+}
+
+/* ---------- 加载页淡出后，给首屏一个平滑入场 ---------- */
+.aurora-ready .homeLibraryContainer {
+  animation: aurora-home-in .5s ease both;
+}
+@keyframes aurora-home-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: none; }
+}
