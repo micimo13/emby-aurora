@@ -1,0 +1,48 @@
+/*!
+ * EmbyAurora — features/fluent.css
+ * Fluent 布局：侧边栏浮层 + 顶栏沉浸 + 卡片间距优化
+ */
+
+/* 侧边栏浮层化 */
+.drawer, .mainDrawer, .navMenuSection {
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  background-color: rgba(10, 12, 20, .72) !important;
+  border-right: 1px solid rgba(255, 255, 255, .06);
+}
+
+/* 侧边栏选中项 */
+.navMenuOption-selected,
+.navMenuOption:not(.navMenuOption-selected):hover {
+  background: var(--aurora-accent-soft, rgba(109, 93, 252, .16)) !important;
+  border-radius: 10px;
+}
+.navMenuOption-selected .navMenuOptionText {
+  color: var(--aurora-accent, #6d5dfc) !important;
+  font-weight: 600;
+}
+
+/* 顶栏沉浸：无背景时透明，滚动后毛玻璃（配合 bootstrap 的 body class） */
+.skinHeader:not(.skinHeader-withBackground) {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+/* 卡片间距统一 */
+.itemsContainer {
+  gap: 8px;
+}
+
+/* 详情页标题区留白 */
+.itemDetailPage .detailPagePrimaryContainer {
+  padding-top: 12px;
+}
+
+/* 焦点轮廓使用品牌色 */
+:focus-visible {
+  outline: 2px solid var(--aurora-accent, #6d5dfc) !important;
+  outline-offset: 2px;
+}
+
+/* 平滑滚动 */
+html { scroll-behavior: smooth; }
