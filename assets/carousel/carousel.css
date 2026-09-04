@@ -1,0 +1,186 @@
+/*!
+ * EmbyAurora — carousel.css
+ * 沉浸式首页轮播
+ */
+.aurora-carousel {
+  position: relative;
+  width: 100%;
+  height: 56vh;
+  min-height: 360px;
+  max-height: 640px;
+  overflow: hidden;
+  border-radius: var(--aurora-radius, 14px);
+  margin-bottom: 18px;
+  background: #0a0a12;
+  box-shadow: 0 20px 60px -20px rgba(0, 0, 0, .7);
+}
+
+.aurora-carousel__track {
+  position: absolute;
+  inset: 0;
+}
+
+.aurora-carousel__slide {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity .8s ease;
+  pointer-events: none;
+}
+.aurora-carousel__slide.is-active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* 背景图（模糊 + 遮罩） */
+.aurora-carousel__bg {
+  position: absolute;
+  inset: -5%;
+  background-size: cover;
+  background-position: center;
+  filter: blur(10px) brightness(.55) saturate(1.15);
+  transform: scale(1.1);
+}
+.aurora-carousel__shade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(5, 5, 12, .88) 0%, rgba(5, 5, 12, .45) 45%, rgba(5, 5, 12, .15) 100%);
+}
+
+/* 前景内容 */
+.aurora-carousel__content {
+  position: relative;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  gap: 30px;
+  padding: 0 6%;
+  z-index: 2;
+}
+.aurora-carousel__poster {
+  flex: 0 0 auto;
+  width: 168px;
+  height: 252px;
+  border-radius: 12px;
+  object-fit: cover;
+  box-shadow: 0 16px 40px -10px rgba(0, 0, 0, .8);
+  animation: aurora-poster-in .6s ease both;
+}
+.aurora-carousel__info {
+  max-width: 60%;
+  color: #fff;
+}
+.aurora-carousel__title {
+  margin: 0 0 10px;
+  font-size: 34px;
+  font-weight: 700;
+  line-height: 1.2;
+  text-shadow: 0 4px 20px rgba(0, 0, 0, .6);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.aurora-carousel__meta {
+  font-size: 14px;
+  color: rgba(255, 255, 255, .75);
+  margin-bottom: 16px;
+  letter-spacing: .04em;
+}
+.aurora-carousel__desc {
+  font-size: 14px;
+  line-height: 1.7;
+  color: rgba(255, 255, 255, .82);
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+.aurora-carousel__actions {
+  display: flex;
+  gap: 12px;
+}
+.aurora-carousel__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 22px;
+  border-radius: 999px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  color: #fff;
+  transition: transform .2s ease, filter .2s ease;
+}
+.aurora-carousel__btn:hover { transform: translateY(-2px); filter: brightness(1.1); }
+.aurora-carousel__btn--play {
+  background: var(--aurora-accent, #6d5dfc);
+  box-shadow: 0 10px 30px -6px var(--aurora-accent, #6d5dfc);
+}
+.aurora-carousel__btn--detail {
+  background: rgba(255, 255, 255, .14);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, .2);
+}
+
+/* 箭头 */
+.aurora-carousel__arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0, 0, 0, .35);
+  backdrop-filter: blur(6px);
+  color: #fff;
+  font-size: 20px;
+  cursor: pointer;
+  z-index: 3;
+  opacity: 0;
+  transition: opacity .3s ease, background .3s ease;
+}
+.aurora-carousel:hover .aurora-carousel__arrow { opacity: 1; }
+.aurora-carousel__arrow:hover { background: rgba(0, 0, 0, .6); }
+.aurora-carousel__arrow--prev { left: 14px; }
+.aurora-carousel__arrow--next { right: 14px; }
+
+/* 指示点 */
+.aurora-carousel__dots {
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+  z-index: 3;
+}
+.aurora-carousel__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 99px;
+  border: none;
+  background: rgba(255, 255, 255, .35);
+  cursor: pointer;
+  transition: width .3s ease, background .3s ease;
+  padding: 0;
+}
+.aurora-carousel__dot.is-active { width: 24px; background: var(--aurora-accent, #6d5dfc); }
+
+@keyframes aurora-poster-in {
+  from { opacity: 0; transform: translateX(-18px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* 响应式 */
+@media (max-width: 720px) {
+  .aurora-carousel { height: 62vh; min-height: 340px; }
+  .aurora-carousel__poster { width: 110px; height: 165px; }
+  .aurora-carousel__title { font-size: 22px; }
+  .aurora-carousel__desc { display: none; }
+  .aurora-carousel__info { max-width: 100%; }
+  .aurora-carousel__content { padding: 0 24px; gap: 16px; }
+}
