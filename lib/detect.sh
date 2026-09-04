@@ -49,16 +49,17 @@ detect_dashboard_dir() {
       DASHBOARD_DIR="$d"; INDEX_FILE="$d/index.html"; return 0
     fi
   done
-  # 兜底：递归查找
-  DASHBOARD_DIR=$(docker exec "$CONTAINER" sh -c "find / -maxdepth 5 -name index.html -path '*dashboard*' 2>/dev/null | head -1 | xargs dirname" 2>/dev/null)
+  # 兜底：递归查找（|| true 防止 find 无结果时 xargs dirname 非零退出，触发 set -e）
+  DASHBOARD_DIR=$(docker exec "$CONTAINER" sh -c "find / -maxdepth 5 -name index.html -path '*dashboard*' 2>/dev/null | head -1 | xargs dirname 2>/dev/null" 2>/dev/null || true)
   [ -z "$DASHBOARD_DIR" ] && { c_err "未找到 Emby Web 目录"; return 1; }
   INDEX_FILE="$DASHBOARD_DIR/index.html"
 }
 
 detect_version() {
   VER=""
-  VER=$(docker exec "$CONTAINER" sh -c "curl -s --max-time 5 'http://127.0.0.1:8096/emby/System/Info/Public' 2>/dev/null | grep -oE '\"Version\":\"[^\"]+\"' | cut -d'\"' -f4" 2>/dev/null)
-  [ -z "$VER" ] && VER=$(docker exec "$CONTAINER" sh -c "grep -oE '4\.[0-9]+\.[0-9]+\.[0-9]+' '$DASHBOARD_DIR/app.js' 2>/dev/null | head -1" 2>/dev/null)
+  VER=$(docker exec "$CONTAINER" sh -c "curl -s --max-time 5 'http://127.0.0.1:8096/emby/System/Info/Public' 2>/dev/null | grep -oE '\"Version\":\"[^\"]+\"' | cut -d'\"' -f4" 2>/dev/null || true)
+  [ -z "$VER" ] && VER=$(docker exec "$CONTAINER" sh -c "grep -oE '4\.[0-9]+\.[0-9]+\.[0-9]+' '$DASHBOARD_DIR/app.js' 2>/dev/null | head -1" 2>/dev/null || true)
+  return 0
 }
 
 detect_ext_hook() {
