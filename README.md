@@ -39,6 +39,9 @@ curl -sL https://raw.githubusercontent.com/micimo13/emby-aurora/main/online-inst
 
 # 指定容器
 curl -sL https://raw.githubusercontent.com/micimo13/emby-aurora/main/online-install.sh | bash -s -- --container emby
+
+# 集成第三方详情页增强（Emby-Javascript-Details：剧照/演员作品/预告片/翻译/Javdb）
+curl -sL https://raw.githubusercontent.com/micimo13/emby-aurora/main/online-install.sh | bash -s -- --yes --details
 ```
 
 安装完成后浏览器 **Ctrl+F5 / Cmd+Shift+R** 强制刷新即可看到效果 ✨
@@ -50,6 +53,7 @@ git clone https://github.com/micimo13/emby-aurora.git
 cd emby-aurora
 bash install.sh                 # 交互式安装
 bash install.sh --yes           # 免确认
+bash install.sh --yes --details # 附带第三方详情页增强
 bash install.sh --detect-only   # 只检测环境
 bash install.sh --restore       # 容器重建后恢复
 bash uninstall.sh               # 卸载
@@ -88,6 +92,24 @@ bash uninstall.sh               # 卸载
 | ⚡ 增强 | 豆瓣 / Bangumi 评分 | 详情页评分徽章 |
 | ⚡ 增强 | 弹幕 | 弹幕渲染引擎 + 可配置数据源 |
 | ⚡ 增强 | Fluent 布局 | 侧边栏浮层 + 顶栏沉浸 + 卡片间距 |
+| 🔗 第三方 | 详情页增强 | `--details` 一键集成 Emby-Javascript-Details（剧照/演员作品/预告片/翻译/Javdb） |
+
+---
+
+## 🔗 第三方集成（Emby-Javascript-Details）
+
+EmbyAurora 通过 `--details` 参数一键集成社区优秀项目
+[Emby-Javascript-Details](https://github.com/XingyiHua2024/Emby-Javascript-Details)（作者 XingyiHua2024）：
+
+| 能力 | 说明 |
+|---|---|
+| 🖼️ 高清剧照 | 详情页 fanart 剧照展示，支持排序 |
+| 👥 演员/导演作品 | 展示相关作品 |
+| 🎬 预告片增强 | 列表页悬停播放 + 源信息显示 |
+| 🔤 标题/简介翻译 | OpenAI / Google 翻译（可选） |
+| 🔞 Javdb 集成 | JavDB 刮削 / 短评（可选） |
+
+**合规说明**：该项目未附带 LICENSE，EmbyAurora 采用**引用式集成**——安装时从原作者仓库实时下载脚本（保留原出处与署名），不将第三方代码复制进本仓库。安装后第三方脚本位于容器 `dashboard-ui/` 根目录，配置项（`openaiApiKey` 等）见其 `config.json`。
 
 ---
 
@@ -100,7 +122,8 @@ emby-aurora/
 ├── online-install.sh      # curl | bash 在线入口
 ├── lib/
 │   ├── common.sh          # 公共函数（注入/备份/持久化）
-│   └── detect.sh          # 环境检测（容器/镜像/目录/版本）
+│   ├── detect.sh          # 环境检测（容器/镜像/目录/版本）
+│   └── details.sh         # 第三方集成（Emby-Javascript-Details）
 ├── config/
 │   └── aurora.config.json # 个性化配置模板
 ├── assets/                # 注入到 dashboard-ui/aurora/
