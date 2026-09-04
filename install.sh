@@ -16,11 +16,13 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/lib/common.sh"
 source "$SCRIPT_DIR/lib/detect.sh"
+source "$SCRIPT_DIR/lib/details.sh"
 
 # ---- 参数解析 ----
 CONTAINER=""
 CONFIG_FILE="$SCRIPT_DIR/config/aurora.config.json"
 YES=0
+DETAILS=0
 MODE="install"   # install | detect | restore | uninstall
 
 while [ $# -gt 0 ]; do
@@ -28,6 +30,7 @@ while [ $# -gt 0 ]; do
     --container)  CONTAINER="$2"; shift 2 ;;
     --config)     CONFIG_FILE="$2"; shift 2 ;;
     --yes|-y)     YES=1; shift ;;
+    --details)    DETAILS=1; shift ;;
     --detect-only) MODE="detect"; shift ;;
     --restore)    MODE="restore"; shift ;;
     --uninstall)  MODE="uninstall"; shift ;;
@@ -75,6 +78,7 @@ case "$MODE" in
     if [ "$YES" != "1" ]; then confirm "确认卸载 EmbyAurora 美化？" || exit 0; fi
     backup_index
     uninject_index
+    uninstall_details
     docker exec "$CONTAINER" sh -c "rm -rf '$DASHBOARD_DIR/aurora'" 2>/dev/null
     c_ok "✓ 已卸载（index.html 注入已移除，aurora/ 目录已删除，备份保留在 /config/backups/aurora/）"
     exit 0
@@ -99,6 +103,11 @@ case "$MODE" in
 
     # 4) 社区版持久化钩子
     install_ext_hook
+
+    # 5) 可选：集成第三方 Emby-Javascript-Details
+    if [ "$DETAILS" = "1" ]; then
+      install_details
+    fi
 
     c_ok "════════════════════════════════════"
     c_ok "  ✅ EmbyAurora 安装完成！"
