@@ -1,0 +1,16 @@
+/*!
+ * EmbyAurora — 主题「极光 Aurora」
+ * 蓝紫极光配色，深邃夜空 + 流光强调色
+ */
+:root {
+  --aurora-accent: #6d5dfc;
+  --aurora-accent-soft: rgba(109, 93, 252, .20);
+  --aurora-glass-bg: rgba(18, 16, 38, .55);
+  --aurora-glass-border: rgba(165, 148, 255, .14);
+  --aurora-glow: 0 0 0 1px #8b7cff, 0 12px 44px -8px rgba(109, 93, 252, .5);
+  --aurora-scrollbar: rgba(165, 148, 255, .25);
+}
+
+.skinHeader-withBackground {
+  background-image: linear-gradient(180deg, rgba(30, 27, 66, .7), rgba(14, 12, 32, .55)) !important;
+}
