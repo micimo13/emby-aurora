@@ -50,6 +50,26 @@ EOF
   printf "${C_OFF}\n"
 }
 
+# 完整部署：资源拷贝 + 配置生成 + 幂等注入 + 持久化钩子 +（可选）第三方集成
+# 安装与「容器重建后恢复」共用同一路径——重建会清空 writable 层，assets 与
+# index.html 注入都会丢失，仅恢复 index.html 备份是不够的，必须完整重装。
+deploy() {
+  c_info "部署前端资源 ..."
+  push_dir "$SCRIPT_DIR/assets" "$DASHBOARD_DIR/aurora"
+
+  c_info "写入个性化配置 ..."
+  gen_config_js "$CONFIG_FILE" "$DASHBOARD_DIR/aurora/config.js"
+
+  c_info "注入 index.html ..."
+  inject_index
+
+  install_ext_hook
+
+  if [ "$DETAILS" = "1" ]; then
+    install_details
+  fi
+}
+
 # ---- 各模式 ----
 case "$MODE" in
   detect)
@@ -61,14 +81,9 @@ case "$MODE" in
   restore)
     banner
     run_health_check || exit 1
-    c_info "从 /config/backups/aurora/ 恢复 index.html ..."
-    docker exec "$CONTAINER" sh -c "
-      LATEST=\$(ls -t /config/backups/aurora/index.html.bak.* 2>/dev/null | head -1)
-      [ -z \"\$LATEST\" ] && { echo '  未找到备份'; exit 1; }
-      cp \"\$LATEST\" '$INDEX_FILE'
-      echo \"  已恢复: \$LATEST\"
-    " 2>&1 | sed 's/^/    /'
-    c_ok "✓ 恢复完成"
+    if [ "$YES" != "1" ]; then confirm "恢复 EmbyAurora 美化（重新部署资源并注入）？" || exit 0; fi
+    deploy
+    c_ok "✓ 恢复完成（资源与注入已重新部署）"
     exit 0
     ;;
 
@@ -89,25 +104,7 @@ case "$MODE" in
     run_health_check || exit 1
     if [ "$YES" != "1" ]; then confirm "开始安装 EmbyAurora？" || exit 0; fi
 
-    # 1) 部署前端资源到 dashboard-ui/aurora/
-    c_info "部署前端资源 ..."
-    push_dir "$SCRIPT_DIR/assets" "$DASHBOARD_DIR/aurora"
-
-    # 2) 生成配置 config.js
-    c_info "写入个性化配置 ..."
-    gen_config_js "$CONFIG_FILE" "$DASHBOARD_DIR/aurora/config.js"
-
-    # 3) 幂等注入 index.html
-    c_info "注入 index.html ..."
-    inject_index
-
-    # 4) 社区版持久化钩子
-    install_ext_hook
-
-    # 5) 可选：集成第三方 Emby-Javascript-Details
-    if [ "$DETAILS" = "1" ]; then
-      install_details
-    fi
+    deploy
 
     c_ok "════════════════════════════════════"
     c_ok "  ✅ EmbyAurora 安装完成！"
