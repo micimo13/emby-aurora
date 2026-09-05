@@ -13,7 +13,6 @@ REPO_NAME="emby-aurora"
 BRANCH="main"
 TMP_ROOT="/tmp/aurora-dl"
 TARBALL="$TMP_ROOT/aurora.tar.gz"
-WORK_DIR="$TMP_ROOT/emby-aurora-$BRANCH"
 
 rm -rf "$TMP_ROOT"; mkdir -p "$TMP_ROOT"
 
@@ -25,11 +24,17 @@ if ! curl -fsSL "https://api.github.com/repos/$REPO_OWNER/$REPO_NAME/tarball/$BR
     || { echo "✗ 下载失败，请检查网络或手动 git clone"; exit 1; }
 fi
 
-# 解压（GitHub tarball 顶层目录名带随机前缀，需定位）
-mkdir -p "$WORK_DIR"
-tar xzf "$TARBALL" -C "$TMP_ROOT" 2>/dev/null || tar xzf "$TARBALL" -C "$TMP_ROOT"
-EXTRACTED=$(ls -d "$TMP_ROOT"/"$REPO_NAME"-* 2>/dev/null | head -1)
-[ -z "$EXTRACTED" ] && { echo "✗ 解压失败"; exit 1; }
+# 解压到临时目录
+tar xzf "$TARBALL" -C "$TMP_ROOT" 2>/dev/null || tar xzf "$TARBALL" -C "$TMP_ROOT" \
+  || { echo "✗ 解压失败"; exit 1; }
+
+# 定位仓库根目录：GitHub tarball 的顶层目录名格式不固定——
+#   api.github.com/.../tarball/BRANCH  → <owner>-<repo>-<sha>（如 micimo13-emby-aurora-baf9da6）
+#   codeload.github.com/.../refs/heads → <repo>-<branch>（如 emby-aurora-main）
+# 不能靠名字猜，改为按「含 install.sh 的目录」精确定位。
+EXTRACTED=$(find "$TMP_ROOT" -maxdepth 2 -name install.sh -print 2>/dev/null | head -1)
+[ -z "$EXTRACTED" ] && { echo "✗ 未找到 install.sh，仓库结构异常"; exit 1; }
+EXTRACTED=$(dirname "$EXTRACTED")
 
 cd "$EXTRACTED"
 chmod +x install.sh 2>/dev/null || true
