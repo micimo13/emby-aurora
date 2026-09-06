@@ -120,11 +120,47 @@ choose_features() {
   c_ask "② 首页轮播大屏（极光玻璃信息条构图）？[Y/n]: "; read_input ans "y"
   { [ "$ans" = "n" ] || [ "$ans" = "N" ]; } && set_block_bool carousel enabled false "$CONFIG_FILE"
 
-  c_ask "③ 主题（aurora=极光 / ice=冰川 / nebula=星云 / cinema=黑金 / default=仅基础）[aurora]: "; read_input ans "aurora"
-  set_block_str theme name "$ans" "$CONFIG_FILE"
+  echo ""
+  c_info "③ 选择主题："
+  echo "   1) aurora  极光（青→蓝紫→品红，默认）"
+  echo "   2) ice     冰川（青蓝冷调）"
+  echo "   3) nebula  星云（紫红暖调）"
+  echo "   4) cinema  黑金（影院银幕质感）"
+  echo "   5) default 仅基础美化（不套主题）"
+  c_ask "选择 [1-5, 默认 1]: "; read_input ans "1"
+  case "$ans" in
+    2) set_block_str theme name "ice" "$CONFIG_FILE" ;;
+    3) set_block_str theme name "nebula" "$CONFIG_FILE" ;;
+    4) set_block_str theme name "cinema" "$CONFIG_FILE" ;;
+    5) set_block_str theme name "default" "$CONFIG_FILE" ;;
+    *) set_block_str theme name "aurora" "$CONFIG_FILE" ;;
+  esac
 
   c_ask "④ 替换顶栏 Logo？[Y/n]: "; read_input ans "y"
-  { [ "$ans" = "n" ] || [ "$ans" = "N" ]; } && set_block_bool logo header false "$CONFIG_FILE"
+  if [ "$ans" = "n" ] || [ "$ans" = "N" ]; then
+    set_block_bool logo header false "$CONFIG_FILE"
+  else
+    echo "   Logo 替换方式："
+    echo "   1) 图片（粘贴图片 URL）"
+    echo "   2) 文字（输入文字内容）"
+    echo "   3) 使用默认 Logo"
+    c_ask "选择 [1-3, 默认 3]: "; read_input ltype "3"
+    case "$ltype" in
+      1)
+        set_block_str logo type "image" "$CONFIG_FILE"
+        c_ask "   图片 URL（如 https://example.com/logo.png）: "; read_input lurl ""
+        if [ -n "$lurl" ]; then set_block_str logo imageUrl "$lurl" "$CONFIG_FILE"; fi
+        ;;
+      2)
+        set_block_str logo type "text" "$CONFIG_FILE"
+        c_ask "   文字内容（如 MY NAS）: "; read_input ltext "AURORA"
+        set_block_str logo text "$ltext" "$CONFIG_FILE"
+        c_ask "   文字颜色（如 #d4af37，回车=白色）: "; read_input lcolor "#ffffff"
+        set_block_str logo color "$lcolor" "$CONFIG_FILE"
+        ;;
+      *) ;;  # 默认 Logo，不改
+    esac
+  fi
 
   c_ask "⑤ 播放倍速记忆（Ctrl/Cmd+↑/↓ 调速）？[Y/n]: "; read_input ans "y"
   { [ "$ans" = "n" ] || [ "$ans" = "N" ]; } && set_block_bool features speed false "$CONFIG_FILE"
