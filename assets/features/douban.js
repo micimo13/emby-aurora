@@ -90,9 +90,14 @@
     host.parentNode.insertBefore(el, host);
   }
 
+  var lastReq = 0;
   function init() {
+    if (document.getElementById('aurora-rating')) return; // 已注入
     var title = getTitle();
     if (!title) return;
+    var now = Date.now();
+    if (now - lastReq < 5000) return; // 5s 节流，避免重复请求
+    lastReq = now;
     var year = getYear();
     var done = function (info) { if (info && info.score) render(info); };
     if (SOURCE === 'douban') {
@@ -102,9 +107,17 @@
     }
   }
 
+  function start() {
+    init();
+    // 详情页 SPA 异步渲染，持续监听（节流后不会重复请求）
+    setInterval(function () {
+      if (!document.getElementById('aurora-rating')) init();
+    }, 1500);
+  }
+
   if (global.AURORA && global.AURORA.onReady) {
-    global.AURORA.onReady(function () { setTimeout(init, 1500); });
+    global.AURORA.onReady(start);
   } else {
-    document.addEventListener('DOMContentLoaded', function () { setTimeout(init, 2500); });
+    document.addEventListener('DOMContentLoaded', function () { setTimeout(start, 1500); });
   }
 })(window);
