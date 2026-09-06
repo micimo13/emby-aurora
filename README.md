@@ -51,13 +51,17 @@ curl -sL https://raw.githubusercontent.com/micimo13/emby-aurora/main/online-inst
 ```bash
 git clone https://github.com/micimo13/emby-aurora.git
 cd emby-aurora
-bash install.sh                 # 交互式安装
-bash install.sh --yes           # 免确认
-bash install.sh --yes --details # 附带第三方详情页增强
+bash install.sh                 # 交互式安装：逐个选择要装的功能
+bash install.sh --yes           # 免确认，用默认配置
+bash install.sh --yes --details # 默认配置 + 第三方详情页增强（JAV）
 bash install.sh --detect-only   # 只检测环境
 bash install.sh --restore       # 容器重建后恢复
 bash uninstall.sh               # 卸载
 ```
+
+> 🎛️ **交互式安装**：运行 `bash install.sh`（不加 `--yes`）会逐个询问要安装的功能——
+> ① 预热加载页 ② 首页轮播大屏 ③ 主题 ④ Logo 替换 ⑤ 倍速记忆 ⑥ Fluent 布局
+> ⑦ 外部播放器 ⑧ 豆瓣评分 ⑨ 弹幕 ⑩ 第三方详情页增强（JAV）。回车用默认值，按需开/关。
 
 ---
 
