@@ -70,9 +70,14 @@
    * 2. Emby 环境检测（非 Emby 页面不运行任何注入）
    * ======================================================================= */
   function isEmby() {
+    // 宽松检测，多路兜底。关键：Emby Web 入口 URL 必含 /web/（最可靠的信号，
+    // 因为本脚本只会被注入到 Emby 的 index.html，且 </head> 前 body/ApiClient 尚未就绪）。
+    if (location.pathname.indexOf('/web/') !== -1) return true;
     var meta = doc.querySelector('meta[name="application-name"]');
-    if (meta && meta.getAttribute('content') === 'Emby') return true;
-    return !!(doc.querySelector('.accent-emby') || global.ApiClient || global.Emby);
+    var m = meta ? (meta.getAttribute('content') || '') : '';
+    if (/emby/i.test(m)) return true;
+    if (doc.querySelector('.accent-emby, .skinHeader, .emby-scroller, #loginPage')) return true;
+    return !!(global.ApiClient || global.Emby);
   }
 
   /* =========================================================================
