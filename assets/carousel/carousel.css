@@ -32,12 +32,14 @@
   pointer-events: auto;
 }
 
-/* 背景图（模糊 + 遮罩） */
+/* 背景图（横版 Backdrop，<img> 元素 + object-fit，加载失败 JS 回退竖版海报） */
 .aurora-carousel__bg {
   position: absolute;
   inset: -5%;
-  background-size: cover;
-  background-position: center;
+  width: 110%;
+  height: 110%;
+  object-fit: cover;
+  object-position: center;
   filter: blur(10px) brightness(.55) saturate(1.15);
   transform: scale(1.1);
 }
