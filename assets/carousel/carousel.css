@@ -1,0 +1,144 @@
+/*!
+ * EmbyAurora — carousel.css（沉浸式首页轮播 · 底部渐变遮罩构图）
+ * =============================================================================
+ *  构图原则（回应「玻璃条遮图」反馈）：
+ *    · Backdrop 图完整满屏（object-fit: cover），绝不裁剪到只剩一条
+ *    · 信息直接浮在图上，靠底部「自然渐变遮罩」保证可读，不用独立玻璃条
+ *    · 全部颜色引用 --aurora-* 变量，跟随主题/设置中心实时变化
+ * =============================================================================
+ */
+.aurora-carousel {
+  position: relative;
+  width: 100%;
+  height: 74vh;
+  min-height: 420px;
+  max-height: 820px;
+  overflow: hidden;
+  background: var(--aurora-bg, #07070f);
+  box-shadow: 0 24px 70px -30px rgba(0, 0, 0, .8);
+  margin-bottom: 18px;
+}
+
+.aurora-carousel__track { position: absolute; inset: 0; }
+
+.aurora-carousel__slide {
+  position: absolute; inset: 0;
+  opacity: 0; transition: opacity .9s ease; pointer-events: none;
+}
+.aurora-carousel__slide.is-active { opacity: 1; pointer-events: auto; }
+
+/* 背景图：完整铺满，不做 mask 裁剪 */
+.aurora-carousel__bg {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover; object-position: center;
+  user-select: none;
+}
+.aurora-carousel__bg--empty {
+  background: linear-gradient(135deg, var(--aurora-bg-soft, #16162a), var(--aurora-bg, #07070f));
+}
+
+/* 底部自然渐变遮罩：从透明过渡到背景色，替代玻璃条 */
+.aurora-carousel__shade {
+  position: absolute; inset: 0; z-index: 2; pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    transparent 34%,
+    rgba(0, 0, 0, .28) 62%,
+    var(--aurora-bg, #080808) 100%
+  );
+}
+/* 顶部压一点，保证返回按钮/顶栏可读 */
+.aurora-carousel__shade::before {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(180deg, rgba(0, 0, 0, .42) 0%, transparent 22%);
+}
+
+/* 信息：浮在图上，靠遮罩 + 文字阴影保证可读 */
+.aurora-carousel__info {
+  position: absolute; left: 6%; bottom: 13%; z-index: 3;
+  max-width: 56%; color: #fff;
+}
+.aurora-carousel__logo {
+  display: block; max-height: 84px; max-width: 320px;
+  object-fit: contain; object-position: left;
+  margin-bottom: 12px; filter: drop-shadow(0 4px 18px rgba(0, 0, 0, .65));
+}
+.aurora-carousel__title {
+  margin: 0 0 8px;
+  font-family: var(--aurora-font, Georgia, serif);
+  font-size: clamp(1.8rem, 4.4vw, 3.4rem);
+  font-weight: 800; line-height: 1.12; letter-spacing: .01em;
+  text-shadow: 0 3px 30px rgba(0, 0, 0, .7);
+}
+.aurora-carousel__meta {
+  font-size: 13px; letter-spacing: .1em;
+  color: rgba(255, 255, 255, .78); margin-bottom: 12px;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, .6);
+}
+.aurora-carousel__desc {
+  font-size: 14px; line-height: 1.75; color: rgba(255, 255, 255, .86);
+  max-width: 640px; margin: 0 0 20px;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  text-shadow: 0 1px 10px rgba(0, 0, 0, .6);
+}
+.aurora-carousel__actions { display: flex; gap: 12px; flex-wrap: wrap; }
+
+.aurora-carousel__btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 13px 30px; border-radius: var(--aurora-radius, 999px);
+  font-size: 15px; font-weight: 700; cursor: pointer; border: none; color: #fff;
+  font-family: var(--aurora-font-ui);
+  transition: transform .2s, filter .2s;
+}
+.aurora-carousel__btn:hover { transform: translateY(-2px); filter: brightness(1.1); }
+.aurora-carousel__playicon { flex: none; }
+
+.aurora-carousel__btn--play {
+  background: var(--aurora-gradient, #c9a227);
+  box-shadow: 0 10px 32px -8px var(--aurora-accent, rgba(0,0,0,.5));
+}
+.aurora-carousel__btn--detail {
+  background: rgba(255, 255, 255, .14);
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, .24);
+}
+
+/* 箭头 */
+.aurora-carousel__arrow {
+  position: absolute; top: 50%; transform: translateY(-50%);
+  width: 46px; height: 46px; border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, .2);
+  background: rgba(0, 0, 0, .32);
+  color: #fff; font-size: 22px; line-height: 1; cursor: pointer; z-index: 4;
+  opacity: 0; transition: opacity .3s, background .3s, border-color .3s;
+}
+.aurora-carousel:hover .aurora-carousel__arrow { opacity: 1; }
+.aurora-carousel__arrow:hover {
+  background: var(--aurora-accent-soft, rgba(255,255,255,.2));
+  border-color: var(--aurora-accent, #fff);
+}
+.aurora-carousel__arrow--prev { left: 18px; }
+.aurora-carousel__arrow--next { right: 18px; }
+
+/* 指示点 */
+.aurora-carousel__dots {
+  position: absolute; right: 6%; bottom: 26px; display: flex; gap: 8px; z-index: 4;
+}
+.aurora-carousel__dot {
+  width: 8px; height: 8px; border-radius: 99px; border: none; padding: 0;
+  background: rgba(255, 255, 255, .34); cursor: pointer;
+  transition: width .3s, background .3s;
+}
+.aurora-carousel__dot.is-active { width: 26px; background: var(--aurora-gradient, #fff); }
+
+/* 响应式 */
+@media (max-width: 720px) {
+  .aurora-carousel { height: 58vh; min-height: 340px; }
+  .aurora-carousel__info { left: 5%; bottom: 11%; max-width: 78%; }
+  .aurora-carousel__logo { max-height: 48px; max-width: 180px; }
+  .aurora-carousel__desc { display: none; }
+  .aurora-carousel__btn { padding: 11px 22px; font-size: 14px; }
+  .aurora-carousel__dots { right: 5%; bottom: 18px; }
+}

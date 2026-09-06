@@ -1,0 +1,19 @@
+/*!
+ * EmbyAurora · 主题包「雪白 · 极简」（Snow）
+ * 浅灰白 + 细字重 + 大留白 + 大圆角。Apple TV+ 式的干净克制。
+ */
+:root {
+  --aurora-bg: #f5f5f7;
+  --aurora-bg-soft: #ffffff;
+  --aurora-glass: rgba(255, 255, 255, .82);
+  --aurora-glass-strong: rgba(255, 255, 255, .92);
+  --aurora-glass-border: rgba(0, 0, 0, .1);
+  --aurora-text: #1d1d1f;
+  --aurora-text-dim: #6e6e73;
+  --aurora-accent: #0066cc;
+  --aurora-accent-soft: rgba(0, 102, 204, .1);
+  --aurora-gradient: #0066cc;
+  --aurora-font: -apple-system, "SF Pro Display", "PingFang SC", sans-serif;
+  --aurora-font-ui: -apple-system, "SF Pro Text", "PingFang SC", "Microsoft YaHei", sans-serif;
+  --aurora-radius: 16px;
+}

@@ -1,0 +1,36 @@
+/*!
+ * EmbyAurora — features/douban.css
+ * 豆瓣 / Bangumi 评分徽章
+ */
+.aurora-rating {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 6px 0;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .08);
+  border: 1px solid rgba(255, 255, 255, .12);
+  font-size: 14px;
+  color: #fff;
+  white-space: nowrap;
+}
+.aurora-rating__score {
+  font-size: 18px;
+  font-weight: 700;
+  color: #f5c518;
+}
+.aurora-rating__stars {
+  color: #f5c518;
+  letter-spacing: 1px;
+}
+.aurora-rating__count {
+  color: rgba(255, 255, 255, .6);
+  font-size: 12px;
+}
+.aurora-rating__src {
+  font-size: 11px;
+  color: rgba(255, 255, 255, .45);
+  padding-left: 8px;
+  border-left: 1px solid rgba(255, 255, 255, .15);
+}

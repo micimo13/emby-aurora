@@ -1,0 +1,19 @@
+# 二进制产物 / 打包文件（严禁入库 —— 历史教训）
+*.tar.gz
+*.tgz
+*.zip
+
+# Python 缓存
+__pycache__/
+*.pyc
+
+# 系统 / 编辑器
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/
+
+# 临时文件
+/tmp/
+*.tmp

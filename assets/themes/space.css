@@ -1,0 +1,19 @@
+/*!
+ * EmbyAurora · 主题包「深空 · 玻璃」（Deep Space）
+ * 深蓝黑 + 冰蓝主色 + 真·毛玻璃。通透、科技、未来感。
+ */
+:root {
+  --aurora-bg: #0b1020;
+  --aurora-bg-soft: #121a30;
+  --aurora-glass: rgba(255, 255, 255, .06);
+  --aurora-glass-strong: rgba(14, 19, 38, .72);
+  --aurora-glass-border: rgba(255, 255, 255, .12);
+  --aurora-text: #e6ecff;
+  --aurora-text-dim: #8b94b0;
+  --aurora-accent: #7aa2ff;
+  --aurora-accent-soft: rgba(122, 162, 255, .16);
+  --aurora-gradient: linear-gradient(120deg, #7aa2ff, #a78bfa);
+  --aurora-font: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  --aurora-font-ui: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  --aurora-radius: 14px;
+}

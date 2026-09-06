@@ -1,0 +1,19 @@
+/*!
+ * EmbyAurora · 主题包「影幕 · 黑金」（Cinema Noir，默认）
+ * 深色影院 + 香槟金细线 + 衬线大标题。克制、庄重、影院感。
+ */
+:root {
+  --aurora-bg: #080808;
+  --aurora-bg-soft: #101010;
+  --aurora-glass: rgba(16, 16, 16, .6);
+  --aurora-glass-strong: rgba(10, 10, 10, .85);
+  --aurora-glass-border: rgba(201, 162, 39, .28);
+  --aurora-text: #f2efe7;
+  --aurora-text-dim: #8f8a7d;
+  --aurora-accent: #c9a227;
+  --aurora-accent-soft: rgba(201, 162, 39, .16);
+  --aurora-gradient: #c9a227;
+  --aurora-font: Georgia, "Songti SC", "STSong", serif;
+  --aurora-font-ui: "Segoe UI", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  --aurora-radius: 3px;
+}

@@ -1,0 +1,23 @@
+<svg width="200" height="60" viewBox="0 0 200 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="auroraGrad" x1="0" y1="0" x2="160" y2="60" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#6D5DFC"/>
+      <stop offset="0.5" stop-color="#22D3EE"/>
+      <stop offset="1" stop-color="#F472B6"/>
+    </linearGradient>
+    <linearGradient id="auroraGrad2" x1="0" y1="0" x2="0" y2="60" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#8B7CFF"/>
+      <stop offset="1" stop-color="#6D5DFC"/>
+    </linearGradient>
+  </defs>
+
+  <!-- 图标：极光渐变圆角方形 + 播放三角 -->
+  <rect x="4" y="8" width="44" height="44" rx="13" fill="url(#auroraGrad)"/>
+  <path d="M22 20.5 L38 30 L22 39.5 Z" fill="#ffffff" opacity="0.96"/>
+
+  <!-- 文字 -->
+  <text x="58" y="30" font-family="Segoe UI, PingFang SC, Microsoft YaHei, sans-serif"
+        font-size="20" font-weight="700" letter-spacing="3" fill="url(#auroraGrad)">AURORA</text>
+  <text x="58" y="46" font-family="Segoe UI, PingFang SC, Microsoft YaHei, sans-serif"
+        font-size="9" letter-spacing="5" fill="#8B8CA8">EMBY THEME</text>
+</svg>

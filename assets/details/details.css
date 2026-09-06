@@ -1,0 +1,91 @@
+/*!
+ * EmbyAurora — details/details.css（详情页增强样式）
+ * 全部引用 --aurora-* 变量，跟随主题/设置中心实时变化。
+ */
+.aurora-details {
+  margin-top: 26px;
+  color: var(--aurora-text);
+  font-family: var(--aurora-font-ui);
+}
+
+.aurora-details__ratings {
+  display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+  margin-bottom: 6px;
+}
+.aurora-rate {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 7px 14px; border-radius: var(--aurora-radius, 8px);
+  border: 1px solid var(--aurora-glass-border);
+  background: var(--aurora-glass);
+  font-size: 13px; font-weight: 600; color: var(--aurora-text);
+  text-decoration: none;
+}
+.aurora-rate i {
+  width: 8px; height: 8px; border-radius: 50%; background: currentColor; display: inline-block;
+}
+.aurora-rate--main b { font-size: 18px; font-weight: 800; color: var(--aurora-accent); }
+.aurora-rate--main small { font-size: 11px; color: var(--aurora-text-dim); font-weight: 400; }
+.aurora-rate--link:hover { border-color: currentColor; }
+
+.aurora-details__section { margin-top: 28px; }
+.aurora-details__section h4 {
+  font-family: var(--aurora-font, Georgia, serif);
+  font-size: 18px; font-weight: 700; margin: 0 0 14px;
+  display: flex; align-items: center; gap: 10px;
+}
+.aurora-details__section h4::before {
+  content: ''; width: 4px; height: 16px; border-radius: 99px;
+  background: var(--aurora-gradient);
+}
+
+/* 剧照墙 */
+.aurora-details__stills {
+  display: grid; grid-auto-flow: column; grid-auto-columns: 220px; gap: 12px;
+  overflow-x: auto; padding-bottom: 8px;
+}
+.aurora-details__stills::-webkit-scrollbar { height: 6px; }
+.aurora-details__stills::-webkit-scrollbar-thumb { background: var(--aurora-accent-soft); }
+.aurora-still {
+  aspect-ratio: 16/9; border-radius: var(--aurora-radius, 6px); overflow: hidden;
+  border: 1px solid var(--aurora-glass-border); cursor: pointer;
+  transition: transform .25s, box-shadow .25s;
+}
+.aurora-still:hover { transform: scale(1.03); box-shadow: 0 12px 32px -12px rgba(0,0,0,.6); }
+.aurora-still img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+/* 演职员 */
+.aurora-details__cast {
+  display: grid; grid-auto-flow: column; grid-auto-columns: 104px; gap: 14px;
+  overflow-x: auto; padding-bottom: 8px;
+}
+.aurora-cast { text-align: center; }
+.aurora-cast__ava {
+  width: 72px; height: 72px; border-radius: 50%; overflow: hidden;
+  margin: 0 auto 8px; background: var(--aurora-accent-soft);
+  display: flex; align-items: center; justify-content: center;
+  border: 1px solid var(--aurora-glass-border);
+}
+.aurora-cast__ava img { width: 100%; height: 100%; object-fit: cover; }
+.aurora-cast__ava--ph { font-size: 26px; font-weight: 700; color: var(--aurora-accent); }
+.aurora-cast__name { font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.aurora-cast__role { font-size: 11px; color: var(--aurora-text-dim); margin-top: 2px; }
+
+/* 相关推荐 */
+.aurora-details__related {
+  display: grid; grid-auto-flow: column; grid-auto-columns: 130px; gap: 12px;
+  overflow-x: auto; padding-bottom: 8px;
+}
+.aurora-rel { cursor: pointer; }
+.aurora-rel img, .aurora-rel__ph {
+  width: 100%; aspect-ratio: 2/3; object-fit: cover; border-radius: var(--aurora-radius, 6px);
+  display: block; border: 1px solid var(--aurora-glass-border);
+}
+.aurora-rel__ph {
+  display: flex; align-items: center; justify-content: center;
+  font-size: 30px; font-weight: 700; color: var(--aurora-accent);
+  background: var(--aurora-accent-soft);
+}
+.aurora-rel:hover img, .aurora-rel:hover .aurora-rel__ph {
+  box-shadow: 0 0 0 1px var(--aurora-accent), 0 14px 34px -14px rgba(0,0,0,.6);
+}
+.aurora-rel__name { font-size: 12px; margin-top: 7px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

@@ -1,0 +1,19 @@
+/*!
+ * EmbyAurora · 主题包「画报 · 编辑」（Editorial）
+ * 暖纸白 + 粗黑标题 + 砖红点缀。时尚杂志、艺术画廊感。
+ */
+:root {
+  --aurora-bg: #f3efe6;
+  --aurora-bg-soft: #ffffff;
+  --aurora-glass: rgba(255, 255, 255, .86);
+  --aurora-glass-strong: rgba(243, 239, 230, .94);
+  --aurora-glass-border: rgba(20, 18, 16, .16);
+  --aurora-text: #141210;
+  --aurora-text-dim: #6b6257;
+  --aurora-accent: #d8482a;
+  --aurora-accent-soft: rgba(216, 72, 42, .12);
+  --aurora-gradient: #d8482a;
+  --aurora-font: "Helvetica Neue", "PingFang SC", "Microsoft YaHei", sans-serif;
+  --aurora-font-ui: "Helvetica Neue", "PingFang SC", "Microsoft YaHei", sans-serif;
+  --aurora-radius: 0px;
+}

@@ -1,0 +1,231 @@
+/*!
+ * EmbyAurora — aurora.css（主题引擎 + 基础美化）
+ * =============================================================================
+ *  定位：单一 CSS 变量接口，驱动所有组件的视觉。默认值 =「影幕 · 黑金」。
+ *  结构：
+ *    · :root 定义 --aurora-* 变量（默认 cinema 黑金）
+ *    · 本文件只写「引用变量的组件样式」，不写死颜色
+ *    · themes/*.css 仅覆盖变量（换主题 = 换变量，结构零改动）
+ *    · settings.js 运行时直接改变量（网页内换主题/调色）
+ * =============================================================================
+ */
+:root {
+  /* 基础 */
+  --aurora-bg: #080808;
+  --aurora-bg-soft: #101010;
+  --aurora-glass: rgba(16, 16, 16, .6);
+  --aurora-glass-strong: rgba(10, 10, 10, .85);
+  --aurora-glass-border: rgba(201, 162, 39, .28);
+  --aurora-text: #f2efe7;
+  --aurora-text-dim: #8f8a7d;
+
+  /* 主色 / 渐变 */
+  --aurora-accent: #c9a227;
+  --aurora-accent-soft: rgba(201, 162, 39, .16);
+  --aurora-gradient: #c9a227;          /* 渐变开关关闭 = 纯主色（克制默认） */
+
+  /* 字体 / 圆角 */
+  --aurora-font: Georgia, "Songti SC", "STSong", serif;
+  --aurora-font-ui: "Segoe UI", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  --aurora-radius: 3px;
+}
+
+/* =========================================================================
+ * 全局基调
+ * ======================================================================= */
+html, body {
+  background: var(--aurora-bg) !important;
+}
+body {
+  font-family: var(--aurora-font-ui);
+  color: var(--aurora-text);
+}
+/* 背景容器（Emby 首页 / 详情页的深色背景层） */
+.backgroundContainer,
+.backdropContainer,
+.pageBackground {
+  background: var(--aurora-bg) !important;
+}
+
+/* 滚动条 */
+::-webkit-scrollbar { width: 9px; height: 9px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--aurora-accent-soft); border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: var(--aurora-accent); }
+
+/* =========================================================================
+ * 顶栏 .skinHeader
+ * ======================================================================= */
+.skinHeader {
+  background: var(--aurora-glass) !important;
+  backdrop-filter: blur(20px) saturate(150%);
+  -webkit-backdrop-filter: blur(20px) saturate(150%);
+  border-bottom: 1px solid var(--aurora-glass-border) !important;
+}
+.skinHeader .pageTitle,
+.skinHeader .headerButton {
+  color: var(--aurora-text) !important;
+}
+
+/* =========================================================================
+ * 侧边抽屉
+ * ======================================================================= */
+.mainDrawerPanel {
+  background: var(--aurora-glass-strong) !important;
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-right: 1px solid var(--aurora-glass-border) !important;
+}
+.mainDrawerPanel a,
+.drawerListItem {
+  color: var(--aurora-text-dim) !important;
+}
+.drawerListItem:hover,
+.mainDrawerPanel a:hover {
+  color: var(--aurora-text) !important;
+  background: var(--aurora-accent-soft) !important;
+}
+.drawerListItem-selected,
+.mainDrawerPanel a.navMenuOption-selected {
+  color: var(--aurora-text) !important;
+  background: var(--aurora-accent-soft) !important;
+  box-shadow: inset 3px 0 0 var(--aurora-accent) !important;
+}
+
+/* =========================================================================
+ * 卡片（海报）
+ * ======================================================================= */
+.cardBox {
+  border-radius: var(--aurora-radius);
+  transition: transform .28s ease, box-shadow .28s ease;
+}
+.cardBox:hover {
+  transform: translateY(-6px) scale(1.03);
+  box-shadow: 0 0 0 1px var(--aurora-glass-border), 0 18px 44px -16px rgba(0, 0, 0, .7);
+}
+.cardImageContainer {
+  border-radius: var(--aurora-radius);
+  overflow: hidden;
+}
+.cardOverlayContainer {
+  border-radius: var(--aurora-radius);
+}
+/* 卡片文字（片名） */
+.cardText,
+.itemName {
+  color: var(--aurora-text) !important;
+  font-family: var(--aurora-font-ui);
+}
+
+/* =========================================================================
+ * 按钮
+ * ======================================================================= */
+.emby-button,
+.button-flat {
+  font-family: var(--aurora-font-ui);
+}
+.emby-button:not(.paper-icon-button-light) {
+  border-radius: var(--aurora-radius);
+}
+.button-submit,
+.emby-button.emby-button-submit,
+.btnPrimary {
+  background: var(--aurora-gradient) !important;
+  color: #fff !important;
+  box-shadow: 0 8px 26px -8px var(--aurora-accent);
+}
+.button-submit:hover,
+.emby-button.emby-button-submit:hover {
+  filter: brightness(1.1);
+}
+
+/* =========================================================================
+ * 首页 section 标题
+ * ======================================================================= */
+.sectionTitleTextButton > h2,
+.sectionTitle {
+  color: var(--aurora-text) !important;
+  font-family: var(--aurora-font-ui);
+}
+.verticalSection .sectionTitleTextButton > h2::before {
+  content: '';
+  display: inline-block;
+  width: 4px;
+  height: 18px;
+  border-radius: 99px;
+  background: var(--aurora-gradient);
+  margin-right: 10px;
+  vertical-align: -3px;
+}
+
+/* =========================================================================
+ * 选中态 / 焦点 / 链接
+ * ======================================================================= */
+a { color: var(--aurora-accent); }
+.emby-tab-button-active,
+.emby-tab-button.emby-tab-button-active {
+  color: var(--aurora-text) !important;
+  border-bottom-color: var(--aurora-accent) !important;
+}
+.button-active {
+  background: var(--aurora-accent-soft) !important;
+  color: var(--aurora-text) !important;
+}
+
+/* =========================================================================
+ * 详情页
+ * ======================================================================= */
+.itemDetailPage {
+  background: var(--aurora-bg) !important;
+}
+.detailPagePrimaryContainer {
+  background: var(--aurora-glass) !important;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--aurora-glass-border);
+  border-radius: var(--aurora-radius);
+}
+.itemMiscInfo,
+.itemMiscInfo div,
+.itemOverview,
+.detailSectionTitle,
+.detailPageWrapperContainer .itemName {
+  color: var(--aurora-text) !important;
+}
+
+/* =========================================================================
+ * 媒体库页（网格 / 列表视图）
+ * ======================================================================= */
+/* 媒体库视图切换按钮组 */
+.alphaPickerButton,
+.emby-button.emby-button-filter,
+.listPagingButton {
+  color: var(--aurora-text-dim) !important;
+}
+.alphaPickerButton-selected {
+  color: var(--aurora-text) !important;
+  background: var(--aurora-accent-soft) !important;
+}
+/* 列表视图行 */
+.listItem:hover {
+  background: var(--aurora-accent-soft) !important;
+}
+.listItem .secondary {
+  color: var(--aurora-text-dim) !important;
+}
+/* 筛选栏 */
+.filterButton {
+  color: var(--aurora-text) !important;
+}
+
+/* =========================================================================
+ * 播放页（保守增强，避免与各版本播放器 DOM 冲突）
+ * ======================================================================= */
+.videoOsdBottom {
+  background: linear-gradient(180deg, transparent, var(--aurora-bg)) !important;
+}
+.nowPlayingPageTitle,
+.videoOsdTitle {
+  font-family: var(--aurora-font-ui) !important;
+}
+
