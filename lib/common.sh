@@ -99,15 +99,17 @@ uninject_index() {
   fi
 }
 
-# 拷贝目录到目标端
+# 拷贝目录到目标端（拷贝后统一加读权限，避免 Emby 进程无权限读取导致 500）
 push_dir() {
   local src="$1" dst="$2"
   if [ "$DEPLOY_MODE" = "bare" ]; then
     mkdir -p "$dst"
-    cp -r "$src/." "$dst/" 2>/dev/null && c_ok "✓ 已部署资源到 $dst" || { c_err "资源拷贝失败"; return 1; }
+    cp -r "$src/." "$dst/" 2>/dev/null && chmod -R a+rX "$dst" \
+      && c_ok "✓ 已部署资源到 $dst" || { c_err "资源拷贝失败"; return 1; }
   else
     docker exec "$CONTAINER" sh -c "mkdir -p '$dst'" 2>/dev/null
     docker cp "$src/." "$CONTAINER:$dst/" 2>/dev/null \
+      && docker exec "$CONTAINER" sh -c "chmod -R a+rX '$dst'" 2>/dev/null \
       && c_ok "✓ 已部署资源到 $dst" \
       || { c_err "资源拷贝失败"; return 1; }
   fi
