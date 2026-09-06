@@ -144,9 +144,12 @@ set_block_bool() {
 
 # 设置 JSON 配置中「某块」内某个 key 的字符串值
 # set_block_str <块名> <key> <value> <file>
+# 用 | 作 sed 分隔符并转义 & \ |，使 value 可安全包含 URL（/ ? & 等）
 set_block_str() {
   local block="$1" key="$2" value="$3" file="$4"
-  sed -i -E "/\"$block\"/,/}/ s/\"$key\"[[:space:]]*:[[:space:]]*\"[^\"]*\"/\"$key\": \"$value\"/" "$file"
+  local esc
+  esc=$(printf '%s' "$value" | sed 's/[\\&|]/\\&/g')
+  sed -i -E "/\"$block\"/,/}/ s|\"$key\"[[:space:]]*:[[:space:]]*\"[^\"]*\"|\"$key\": \"$esc\"|" "$file"
 }
 
 # 社区版持久化钩子（仅 docker 的 amilys 等镜像有 /config/config/ext.sh）
