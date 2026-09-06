@@ -114,18 +114,27 @@
     xhr.send();
   }
 
+  var started = false;
   function init() {
+    if (started) return;
     // 播放页才启用
     if (!document.querySelector('video, .videoPlayerContainer')) return;
+    started = true;
     var info = getEpisodeInfo();
     fetchBiliByTitle(info.title, info.episode, function (comments) {
       if (comments && comments.length) feed(comments);
     });
   }
 
+  function start() {
+    init();
+    // 播放页 SPA 异步渲染，持续监听
+    setInterval(function () { if (!started) init(); }, 1500);
+  }
+
   if (global.AURORA && global.AURORA.onReady) {
-    global.AURORA.onReady(function () { setTimeout(init, 2000); });
+    global.AURORA.onReady(start);
   } else {
-    document.addEventListener('DOMContentLoaded', function () { setTimeout(init, 3000); });
+    document.addEventListener('DOMContentLoaded', function () { setTimeout(start, 1500); });
   }
 })(window);
