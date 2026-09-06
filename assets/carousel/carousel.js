@@ -18,6 +18,7 @@
   var CONFIG = (global.AURORA_CONFIG && global.AURORA_CONFIG.carousel) || {};
   var INTERVAL = Number(CONFIG.interval) || 8000;
   var MAX = Number(CONFIG.maxCount) || 10;
+  var STYLE = String(CONFIG.style || 'immersive'); // immersive | glass | minimal
   var mounted = false;
 
   function api() { return global.AURORA ? global.AURORA.api() : global.ApiClient; }
@@ -87,7 +88,7 @@
 
   function build(items) {
     var container = document.createElement('div');
-    container.className = 'aurora-carousel';
+    container.className = 'aurora-carousel aurora-carousel--' + STYLE;
 
     var slides = items.map(function (item, i) {
       var id = item.Id || '';
@@ -129,6 +130,35 @@
     return container;
   }
 
+  // 满屏处理：把轮播用负 margin 顶到视口顶部，透明顶栏浮在图上。
+  function fullscreenize(el) {
+    try {
+      document.body.classList.add('aurora-has-carousel');
+      var rect = el.getBoundingClientRect();
+      var shift = Math.max(0, Math.round(rect.top + (window.scrollY || 0)));
+      // 只把「相对文档顶部」的偏移量拉回，确保顶栏高度/页面 padding 都被抵消
+      if (shift > 0) el.style.marginTop = (-shift) + 'px';
+    } catch (e) {}
+  }
+
+  // 滚动：越过轮播后，顶栏恢复实底毛玻璃，保证导航可读。
+  function bindScroll() {
+    function onScroll() {
+      var y = window.scrollY || document.documentElement.scrollTop || 0;
+      var threshold = Math.round(window.innerHeight * 0.55);
+      var cls = document.body.classList;
+      if (y > threshold) cls.add('aurora-scrolled');
+      else cls.remove('aurora-scrolled');
+    }
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', function () {
+      var el = document.querySelector('.aurora-carousel');
+      if (el) { el.style.marginTop = ''; fullscreenize(el); }
+      onScroll();
+    }, { passive: true });
+    onScroll();
+  }
+
   function mount(items) {
     if (mounted) return;
     // 挂到首页媒体库 section 容器之前（参考 emby-crx 的 .homeSectionsContainer）
@@ -138,6 +168,11 @@
     var el = build(items);
     anchor.parentNode.insertBefore(el, anchor);
     mounted = true;
+
+    // 真正满屏：标记 body，并把轮播顶到视口顶部（负 margin），
+    // 让 Emby 顶栏透明地浮在轮播图上（Netflix 式沉浸首屏）。
+    fullscreenize(el);
+    bindScroll();
 
     var slides = Array.prototype.slice.call(el.querySelectorAll('.aurora-carousel__slide'));
     var dots = Array.prototype.slice.call(el.querySelectorAll('.aurora-carousel__dot'));

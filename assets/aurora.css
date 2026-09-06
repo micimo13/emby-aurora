@@ -68,6 +68,39 @@ body {
 }
 
 /* =========================================================================
+ * 首页轮播沉浸：顶栏透明浮在轮播图上（Netflix 式），滚动越过轮播后恢复实底
+ * ======================================================================= */
+body.aurora-has-carousel .skinHeader,
+body.aurora-has-carousel .skinHeader.skinHeader-withBackground,
+body.aurora-has-carousel .skinHeader.focuscontainer-up {
+  background: linear-gradient(180deg, rgba(0, 0, 0, .62) 0%, rgba(0, 0, 0, .28) 60%, rgba(0, 0, 0, 0) 100%) !important;
+  background-color: transparent !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border-bottom: none !important;
+  box-shadow: none !important;
+}
+/* 悬浮在轮播上时，顶栏文字统一用白色保证可读（无论主题深浅） */
+body.aurora-has-carousel .skinHeader .pageTitle,
+body.aurora-has-carousel .skinHeader .headerButton,
+body.aurora-has-carousel .skinHeader .button-flat,
+body.aurora-has-carousel .skinHeader .material-icons {
+  color: #fff !important;
+}
+body.aurora-has-carousel.aurora-scrolled .skinHeader {
+  background: var(--aurora-glass) !important;
+  backdrop-filter: blur(20px) saturate(150%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(150%) !important;
+  border-bottom: 1px solid var(--aurora-glass-border) !important;
+}
+body.aurora-has-carousel.aurora-scrolled .skinHeader .pageTitle,
+body.aurora-has-carousel.aurora-scrolled .skinHeader .headerButton,
+body.aurora-has-carousel.aurora-scrolled .skinHeader .button-flat,
+body.aurora-has-carousel.aurora-scrolled .skinHeader .material-icons {
+  color: var(--aurora-text) !important;
+}
+
+/* =========================================================================
  * 侧边抽屉
  * ======================================================================= */
 .mainDrawerPanel {
@@ -137,6 +170,25 @@ body {
 .button-submit:hover,
 .emby-button.emby-button-submit:hover {
   filter: brightness(1.1);
+}
+
+/* 外部播放器按钮：与主题一致的金色/主色按钮（覆盖 .button-flat 默认样式） */
+.aurora-ext-btn {
+  margin-left: 8px;
+  padding: 0 20px;
+  height: 2.4em;
+  border: none !important;
+  border-radius: var(--aurora-radius);
+  background: var(--aurora-gradient) !important;
+  color: #fff !important;
+  font-family: var(--aurora-font-ui);
+  font-weight: 600;
+  box-shadow: 0 8px 22px -8px var(--aurora-accent);
+  transition: transform .15s ease, filter .15s ease;
+}
+.aurora-ext-btn:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
 }
 
 /* =========================================================================

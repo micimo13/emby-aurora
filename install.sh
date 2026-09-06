@@ -47,7 +47,6 @@ source "$SCRIPT_DIR/lib/alt-deploy.sh"
 CONTAINER=""
 CONFIG_FILE="$SCRIPT_DIR/config/aurora.config.json"
 YES=0
-DETAILS=0
 MODE="install"        # install | detect | restore | uninstall
 DEPLOY="docker"       # docker | bare | proxy | userscript
 BARE_DIR=""
@@ -134,23 +133,34 @@ choose_features() {
   c_ask "① 预热加载页（进入首页的全屏品牌动画）？[Y/n]: "; read_input ans "y"
   { [ "$ans" = "n" ] || [ "$ans" = "N" ]; } && set_block_bool loading enabled false "$CONFIG_FILE"
 
-  c_ask "② 首页轮播大屏（极光玻璃信息条构图）？[Y/n]: "; read_input ans "y"
-  { [ "$ans" = "n" ] || [ "$ans" = "N" ]; } && set_block_bool carousel enabled false "$CONFIG_FILE"
+  c_ask "② 首页轮播大屏？[Y/n]: "; read_input ans "y"
+  if [ "$ans" = "n" ] || [ "$ans" = "N" ]; then
+    set_block_bool carousel enabled false "$CONFIG_FILE"
+  else
+    echo "   轮播样式："
+    echo "   1) immersive 沉浸满屏（大图 + 左下角标题/简介/按钮，默认）"
+    echo "   2) glass     玻璃信息条（底部整宽半透明玻璃条）"
+    echo "   3) minimal   极简（仅大标题，无简介按钮）"
+    c_ask "选择 [1-3, 默认 1]: "; read_input ans "1"
+    case "$ans" in
+      2) set_block_str carousel style "glass" "$CONFIG_FILE" ;;
+      3) set_block_str carousel style "minimal" "$CONFIG_FILE" ;;
+      *) set_block_str carousel style "immersive" "$CONFIG_FILE" ;;
+    esac
+  fi
 
   echo ""
   c_info "③ 选择主题："
-  echo "   1) aurora  极光（青→蓝紫→品红，默认）"
-  echo "   2) ice     冰川（青蓝冷调）"
-  echo "   3) nebula  星云（紫红暖调）"
-  echo "   4) cinema  黑金（影院银幕质感）"
-  echo "   5) default 仅基础美化（不套主题）"
-  c_ask "选择 [1-5, 默认 1]: "; read_input ans "1"
+  echo "   1) cinema 影幕 · 黑金（默认，影院质感）"
+  echo "   2) snow   雪白 · 极简（明亮）"
+  echo "   3) space  深空 · 玻璃（科技蓝紫）"
+  echo "   4) poster 画报 · 编辑（杂志排版）"
+  c_ask "选择 [1-4, 默认 1]: "; read_input ans "1"
   case "$ans" in
-    2) set_block_str theme name "ice" "$CONFIG_FILE" ;;
-    3) set_block_str theme name "nebula" "$CONFIG_FILE" ;;
-    4) set_block_str theme name "cinema" "$CONFIG_FILE" ;;
-    5) set_block_str theme name "default" "$CONFIG_FILE" ;;
-    *) set_block_str theme name "aurora" "$CONFIG_FILE" ;;
+    2) set_block_str theme name "snow" "$CONFIG_FILE" ;;
+    3) set_block_str theme name "space" "$CONFIG_FILE" ;;
+    4) set_block_str theme name "poster" "$CONFIG_FILE" ;;
+    *) set_block_str theme name "cinema" "$CONFIG_FILE" ;;
   esac
 
   c_ask "④ 替换顶栏 Logo？[Y/n]: "; read_input ans "y"
@@ -194,8 +204,8 @@ choose_features() {
   c_ask "⑨ 弹幕（需自建弹幕源）？[y/N]: "; read_input ans "n"
   { [ "$ans" = "y" ] || [ "$ans" = "Y" ]; } && set_block_bool features danmaku true "$CONFIG_FILE"
 
-  c_ask "⑩ 第三方详情页增强 Emby-Javascript-Details（剧照/演员作品/预告片/JAV 翻译，安装时联网下载）？[y/N]: "; read_input ans "n"
-  { [ "$ans" = "y" ] || [ "$ans" = "Y" ]; } && DETAILS=1
+  c_ask "⑩ 详情页增强（评分徽章 / 剧照墙 / 演职员 / 相关推荐）？[Y/n]: "; read_input ans "y"
+  { [ "$ans" = "n" ] || [ "$ans" = "N" ]; } && set_block_bool features details false "$CONFIG_FILE"
 
   echo ""
   c_info "已按选择生成配置，开始部署 ..."

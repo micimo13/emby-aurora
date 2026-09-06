@@ -217,6 +217,7 @@
    * ======================================================================= */
   var modules = {
     carousel:  { js: basePath + '/carousel/carousel.js', css: basePath + '/carousel/carousel.css' },
+    details:   { js: basePath + '/details/details.js', css: basePath + '/details/details.css' },
     danmaku:   { js: basePath + '/features/danmaku.js' },
     douban:    { js: basePath + '/features/douban.js', css: basePath + '/features/douban.css' },
     speed:     { js: basePath + '/features/speed.js' },

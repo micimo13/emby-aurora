@@ -30,6 +30,7 @@
   },
   "carousel": {
     "enabled": true,
+    "style": "immersive",
     "interval": 8000,
     "maxCount": 10
   },
@@ -64,11 +65,12 @@
 
 ### carousel（首页轮播）
 
-| 字段 | 说明 |
-|---|---|
-| `enabled` | 是否启用轮播 |
-| `interval` | 自动切换间隔（毫秒） |
-| `maxCount` | 最多展示条数 |
+| 字段 | 取值 | 说明 |
+|---|---|---|
+| `enabled` | `true`/`false` | 是否启用轮播 |
+| `style` | `immersive` / `glass` / `minimal` | 沉浸满屏 / 玻璃信息条 / 极简 |
+| `interval` | 毫秒 | 自动切换间隔 |
+| `maxCount` | 数字 | 最多展示条数 |
 
 ### features（功能开关）
 

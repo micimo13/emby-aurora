@@ -80,15 +80,55 @@
     return html ? '<div class="aurora-details__ratings">' + html + '</div>' : '';
   }
 
-  /* ---- 剧照墙 ---- */
-  function stillsRow(item) {
-    var tags = item.BackdropImageTags || [];
-    if (!tags.length) return '';
-    var imgs = tags.slice(0, 8).map(function (_, i) {
-      var url = getImageUrl(item.Id, 'Backdrop', i);
-      return url ? '<div class="aurora-still"><img src="' + esc(url) + '" loading="lazy" alt=""></div>' : '';
+  /* ---- 剧照墙（多张 Backdrop，带三级回退，异步补齐） ---- */
+  function buildStills(urls) {
+    var imgs = urls.map(function (u) {
+      return '<div class="aurora-still"><img src="' + esc(u) + '" loading="lazy" alt=""></div>';
     }).join('');
     return imgs ? '<div class="aurora-details__section"><h4>剧照</h4><div class="aurora-details__stills">' + imgs + '</div></div>' : '';
+  }
+
+  function stillsRow(item, cb) {
+    // 1) BackdropImageTags（数组 = 多张剧照，getItem 通常已返回）
+    var tags = item.BackdropImageTags;
+    if (tags && tags.length) {
+      cb(buildStills(tags.slice(0, 8).map(function (_, i) {
+        return getImageUrl(item.Id, 'Backdrop', i);
+      }).filter(Boolean)));
+      return;
+    }
+    // 2) 单张 Backdrop 兜底
+    if (item.ImageTags && item.ImageTags.Backdrop) {
+      var one = getImageUrl(item.Id, 'Backdrop');
+      cb(one ? buildStills([one]) : '');
+      return;
+    }
+    // 3) 异步重查（带 BackdropImageTags 字段），兼容社区版 getItem 未回传的情况
+    var client = api();
+    if (client && client.getItems && client.getCurrentUserId) {
+      try {
+        var uid = client.getCurrentUserId();
+        unwrap(client.getItems(uid, {
+          Ids: item.Id,
+          Recursive: true,
+          Fields: 'BackdropImageTags',
+          EnableUserData: false,
+          EnableTotalRecordCount: false
+        }), function (res) {
+          var it = (res && res.Items && res.Items[0]) || {};
+          var bt = it.BackdropImageTags || [];
+          if (bt.length) {
+            cb(buildStills(bt.slice(0, 8).map(function (_, i) {
+              return getImageUrl(it.Id || item.Id, 'Backdrop', i);
+            }).filter(Boolean)));
+          } else {
+            cb('');
+          }
+        });
+        return;
+      } catch (e) {}
+    }
+    cb('');
   }
 
   /* ---- 演职员 ---- */
@@ -130,6 +170,12 @@
   }
 
   /* ---- 组装并挂载 ---- */
+  function toNode(html) {
+    var t = doc.createElement('template');
+    t.innerHTML = html.trim();
+    return t.content.firstChild;
+  }
+
   function mount(item) {
     var container = doc.querySelector('.itemDetailPage, .detailPageWrapperContainer, .itemBackdrop');
     if (!container) return false;
@@ -137,7 +183,7 @@
     var host = doc.createElement('div');
     host.className = 'aurora-details';
     host.id = 'aurora-details';
-    host.innerHTML = ratingRow(item) + stillsRow(item) + castRow(item);
+    host.innerHTML = ratingRow(item) + castRow(item);
 
     // 插到主信息区之后（详情页主按钮组下方）
     var anchor = doc.querySelector('.mainDetailButtons, .itemOverview, .detailPagePrimaryContainer');
@@ -147,7 +193,16 @@
       container.appendChild(host);
     }
 
-    // 相关推荐异步补齐
+    // 剧照（异步补齐，插到演职员 section 之前）
+    var firstSection = host.querySelector('.aurora-details__section');
+    stillsRow(item, function (html) {
+      if (!html || !host.parentNode) return;
+      var n = toNode(html);
+      if (firstSection && firstSection.parentNode) host.insertBefore(n, firstSection);
+      else host.appendChild(n);
+    });
+
+    // 相关推荐异步补齐（追加到最后）
     similarRow(item, function (html) {
       if (html && host.parentNode) host.insertAdjacentHTML('beforeend', html);
     });
@@ -165,11 +220,12 @@
     });
 
     mountedId = item.Id;
+    return true;
   }
 
   function tryInject() {
-    if (!global.AURORA || !global.AURORA.isHome) return;
-    // 详情页判断：URL 含 item id，且不在首页
+    if (!global.AURORA) return;
+    // 详情页判断：URL 含 item id（首页无 id，自然不注入）
     var id = getItemId();
     if (!id) { mountedId = null; return; }
     if (mountedId === id || tried[id]) return;

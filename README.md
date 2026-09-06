@@ -30,7 +30,7 @@ EmbyAurora 走的是 **服务端注入派**：直接往 Emby 的 `dashboard-ui` 
 
 - 🎨 **主题引擎** — 单一 CSS 变量接口，四套主题包一键切换，换主题不换结构
 - 🖥️ **网页设置中心** — 部署后在页面内实时换主题、自定义颜色、开关渐变，零改代码
-- 🖼️ **沉浸式首页轮播** — API 驱动，满屏 Backdrop + 底部自然渐变遮罩（不遮图），SPA 自适应
+- 🖼️ **沉浸式首页轮播** — API 驱动，真正满屏 Backdrop，顶栏透明悬浮（Netflix 式），三种样式可选（沉浸满屏 / 玻璃信息条 / 极简），SPA 自适应
 - 📋 **详情页增强** — 多平台评分（社区评分/影评人/IMDb/TMDB/TVDB 外链）、剧照墙、演职员、相关推荐
 - ▶️ **外部播放器** — PotPlayer / VLC / mpv / IINA 直链调起（可选）
 - 🐳 **四种部署方式** — Docker / 裸机 / 反向代理 / 油猴脚本，自动检测环境路由
@@ -122,7 +122,7 @@ bash install.sh --config /path/to/your-config.json
 ```json
 {
   "theme": { "name": "cinema", "accent": "#c9a227" },
-  "carousel": { "enabled": true, "interval": 8000 },
+  "carousel": { "enabled": true, "style": "immersive", "interval": 8000 },
   "features": {
     "details": true,
     "extplayer": false,

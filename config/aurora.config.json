@@ -29,6 +29,7 @@
 
   "carousel": {
     "enabled": true,
+    "style": "immersive",
     "interval": 8000,
     "maxCount": 10
   },
