@@ -1,0 +1,19 @@
+/*!
+ * EmbyAurora — 主题「冰川 Ice」
+ * 青蓝冷调：极寒冰川的清冽蓝青，冷冽通透、低饱和
+ */
+:root {
+  --aurora-accent: #38bdf8;
+  --aurora-accent-soft: rgba(56, 189, 248, .18);
+  --aurora-gradient: linear-gradient(120deg, #a5f3fc 0%, #22d3ee 38%, #38bdf8 70%, #818cf8 100%);
+  --aurora-gradient-soft: linear-gradient(120deg, rgba(165,243,252,.88), rgba(34,211,238,.88) 38%, rgba(56,189,248,.88) 70%, rgba(129,140,248,.88));
+  --aurora-glass: rgba(14, 30, 44, .50);
+  --aurora-glass-strong: rgba(9, 20, 32, .72);
+  --aurora-glass-border: rgba(125, 211, 252, .16);
+  --aurora-glow: 0 0 0 1px #7dd3fc, 0 12px 44px -10px rgba(56, 189, 248, .5);
+  --aurora-glow-hover: 0 0 0 1px #bae6fd, 0 18px 60px -10px rgba(56, 189, 248, .65);
+}
+
+.skinHeader-withBackground {
+  background-image: linear-gradient(180deg, rgba(12, 40, 58, .72), rgba(7, 18, 28, .58)) !important;
+}

@@ -1,0 +1,19 @@
+/*!
+ * EmbyAurora — 主题「星云 Nebula」
+ * 紫红暖调：玫瑰星云的浪漫紫红，深邃而温暖
+ */
+:root {
+  --aurora-accent: #a855f7;
+  --aurora-accent-soft: rgba(168, 85, 247, .18);
+  --aurora-gradient: linear-gradient(120deg, #818cf8 0%, #a855f7 40%, #e879f9 72%, #fb7185 100%);
+  --aurora-gradient-soft: linear-gradient(120deg, rgba(129,140,248,.88), rgba(168,85,247,.88) 40%, rgba(232,121,249,.88) 72%, rgba(251,113,133,.88));
+  --aurora-glass: rgba(40, 16, 48, .50);
+  --aurora-glass-strong: rgba(28, 10, 34, .72);
+  --aurora-glass-border: rgba(232, 121, 249, .16);
+  --aurora-glow: 0 0 0 1px #d8b4fe, 0 12px 44px -10px rgba(168, 85, 247, .5);
+  --aurora-glow-hover: 0 0 0 1px #f0abfc, 0 18px 60px -10px rgba(168, 85, 247, .65);
+}
+
+.skinHeader-withBackground {
+  background-image: linear-gradient(180deg, rgba(56, 22, 66, .72), rgba(24, 8, 32, .58)) !important;
+}

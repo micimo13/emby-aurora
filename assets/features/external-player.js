@@ -23,18 +23,23 @@
     return '';
   }
 
-  function getBaseUrl() {
+  function getServerAddress() {
     var api = global.ApiClient;
+    // 参考 embyExternalUrl：_serverAddress 是最可靠的服务器地址
+    if (api && api._serverAddress) return String(api._serverAddress);
     if (api && api.getUrl) { try { return api.getUrl('') || ''; } catch (e) {} }
     var m = location.href.match(/^https?:\/\/[^/]+/);
     return m ? m[0] : '';
   }
 
   function buildStreamUrl(itemId) {
-    var base = getBaseUrl();
+    var base = getServerAddress().replace(/\/+$/, '');
     var key = getApiKey();
-    var url = base + '/emby/Videos/' + encodeURIComponent(itemId) + '/stream?static=true';
+    var api = global.ApiClient;
+    var deviceId = (api && api._deviceId) ? api._deviceId : '';
+    var url = base + '/emby/Videos/' + encodeURIComponent(itemId) + '/stream?Static=true';
     if (key) url += '&api_key=' + encodeURIComponent(key);
+    if (deviceId) url += '&DeviceId=' + encodeURIComponent(deviceId);
     return url;
   }
 

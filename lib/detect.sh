@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # =============================================================================
 #  EmbyAurora · lib/detect.sh
-#  环境检测：容器 / 镜像类型 / Web 目录 / 版本 / 持久化钩子
-#  支持：官方版 emby/embyserver · LinuxServer · amilys 社区版 · 其他
+#  环境检测：容器 / 镜像类型 / Web 目录 / 版本 / 持久化钩子 / 裸机目录
+#  支持：官方版 emby/embyserver · LinuxServer · amilys 社区版 · 裸机/套件安装
 # =============================================================================
 
 detect_container() {
@@ -69,11 +69,42 @@ detect_ext_hook() {
   fi
 }
 
+# 裸机/套件目录探测（DEPLOY_MODE=bare 时使用）
+detect_bare_dir() {
+  if [ -n "$BARE_DIR" ]; then
+    [ -f "$BARE_DIR/index.html" ] || { c_err "目录 $BARE_DIR 下未找到 index.html"; return 1; }
+    DASHBOARD_DIR="$BARE_DIR"
+  else
+    local d
+    for d in \
+      /opt/emby-server/system/dashboard-ui \
+      /usr/lib/emby-server/system/dashboard-ui \
+      /usr/share/emby-server/system/dashboard-ui \
+      /var/lib/emby/system/dashboard-ui \
+      /usr/lib/emby/system/dashboard-ui \
+      /volume1/@appstore/EmbyServer/system/dashboard-ui \
+      /volume1/Emby/system/dashboard-ui; do
+      if [ -f "$d/index.html" ]; then DASHBOARD_DIR="$d"; break; fi
+    done
+    if [ -z "$DASHBOARD_DIR" ]; then
+      DASHBOARD_DIR=$(find / -maxdepth 6 -name index.html -path '*dashboard-ui*' 2>/dev/null | head -1 | xargs dirname 2>/dev/null || true)
+    fi
+    [ -z "$DASHBOARD_DIR" ] && { c_err "未找到 Emby Web 目录，请用 --dir 指定"; return 1; }
+  fi
+  INDEX_FILE="$DASHBOARD_DIR/index.html"
+  c_ok "✓ 目标目录：$DASHBOARD_DIR"
+}
+
 run_health_check() {
-  detect_container || return 1
-  detect_image
-  detect_dashboard_dir || return 1
-  detect_version
-  detect_ext_hook
-  c_ok "✓ 环境就绪：$CONTAINER（$IMAGE_TYPE · Emby ${VER:-未知} · $DASHBOARD_DIR）"
+  if [ "$DEPLOY_MODE" = "bare" ]; then
+    detect_bare_dir || return 1
+    c_ok "✓ 环境就绪：裸机/套件 · $DASHBOARD_DIR"
+  else
+    detect_container || return 1
+    detect_image
+    detect_dashboard_dir || return 1
+    detect_version
+    detect_ext_hook
+    c_ok "✓ 环境就绪：$CONTAINER（$IMAGE_TYPE · Emby ${VER:-未知} · $DASHBOARD_DIR）"
+  fi
 }

@@ -1,108 +1,180 @@
 /*!
  * EmbyAurora — aurora.css
  * =============================================================================
- *  基础美化层：主题变量系统 + 通用视觉优化（毛玻璃 / 圆角 / 滚动条 / 过渡）
- *  配色由 themes/*.css 通过覆盖 CSS 变量实现，本文件保持中性。
+ *  「极光设计语言」基础层 (Aurora Design Language · base)
+ *  以「极光」为核心意象构建的一套原创视觉系统，非 emby-crx 换色：
+ *    · 极光渐变 Aurora Gradient   —— 青→蓝紫→紫→品红 的四段流动渐变
+ *    · 深空背景 Deep Space        —— 夜空蓝黑，而非死黑
+ *    · 玻璃拟态 Glassmorphism     —— 半透明 + 极光细边框 + backdrop-blur
+ *    · 氛围光晕 Ambient Glow      —— 悬浮时极光色光晕扩散
+ *    · 渐变描边 Gradient Border   —— 选中/聚焦的极光描边
+ *  配色由 themes/*.css 覆盖变量实现，本文件保持中性 + 完整 token。
+ *  DOM class 对齐 Emby 4.8/4.9 真实结构（参考 emby-crx style.css 的类名清单）。
  * =============================================================================
  */
 
-/* ---------- 主题变量（供 themes/*.css 覆盖） ---------- */
+/* ============================================================================
+ * 1. 设计 Token（主题通过 themes/*.css 覆盖）
+ * ========================================================================== */
 :root {
-  --aurora-accent: #6d5dfc;             /* 强调色 / 品牌色 */
+  /* 极光色板：北极光从青到品红的真实色序 */
+  --aurora-c1: #22d3ee;
+  --aurora-c2: #6d5dfc;
+  --aurora-c3: #a855f7;
+  --aurora-c4: #f472b6;
+
+  --aurora-accent: #6d5dfc;
   --aurora-accent-soft: rgba(109, 93, 252, .18);
-  --aurora-radius: 14px;                /* 卡片圆角 */
-  --aurora-radius-sm: 8px;
-  --aurora-glass-bg: rgba(16, 18, 28, .55);
-  --aurora-glass-border: rgba(255, 255, 255, .08);
-  --aurora-blur: 18px;
-  --aurora-card-hover: 1.035;           /* 卡片 hover 缩放 */
-  --aurora-glow: 0 0 0 1px var(--aurora-accent), 0 10px 40px -8px var(--aurora-accent-soft);
-  --aurora-shadow: 0 6px 22px rgba(0, 0, 0, .45);
-  --aurora-scrollbar: rgba(255, 255, 255, .16);
-  --aurora-transition: .24s cubic-bezier(.4, 0, .2, 1);
+  --aurora-gradient: linear-gradient(120deg, #22d3ee 0%, #6d5dfc 42%, #a855f7 72%, #f472b6 100%);
+  --aurora-gradient-soft: linear-gradient(120deg, rgba(34,211,238,.9), rgba(109,93,252,.9) 42%, rgba(168,85,247,.9) 72%, rgba(244,114,182,.9));
+
+  /* 深空背景（夜空蓝黑，非死黑） */
+  --aurora-bg: #07070f;
+  --aurora-bg-soft: #0d0d1a;
+
+  /* 玻璃拟态 */
+  --aurora-glass: rgba(22, 22, 40, .50);
+  --aurora-glass-strong: rgba(16, 16, 30, .72);
+  --aurora-glass-border: rgba(165, 148, 255, .16);
+  --aurora-blur: 20px;
+
+  /* 圆角 */
+  --aurora-radius: 14px;
+  --aurora-radius-lg: 20px;
+  --aurora-radius-sm: 9px;
+
+  /* 光晕 / 阴影 */
+  --aurora-glow: 0 0 0 1px rgba(139, 124, 255, .55), 0 12px 44px -10px rgba(109, 93, 252, .55);
+  --aurora-glow-hover: 0 0 0 1px rgba(139, 124, 255, .85), 0 18px 60px -10px rgba(109, 93, 252, .72);
+  --aurora-shadow: 0 8px 30px rgba(0, 0, 0, .5);
+
+  /* 动效 */
+  --aurora-transition: .28s cubic-bezier(.4, 0, .2, 1);
+  --aurora-spring: cubic-bezier(.34, 1.56, .64, 1);
 }
 
-/* ---------- 全局平滑 ---------- */
+/* ============================================================================
+ * 2. 全局质感
+ * ========================================================================== */
 body {
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
 
-/* ---------- 卡片圆角与悬浮 ---------- */
-.cardContent,
+/* ============================================================================
+ * 3. 卡片：玻璃拟态 + 圆角 + 悬浮光晕
+ *    真实 class：.cardBox / .cardImageContainer / .backdropCard
+ * ========================================================================== */
 .cardBox,
-.cardOverlayContainer,
-.card {
+.cardImageContainer,
+.backdropCard {
   border-radius: var(--aurora-radius) !important;
   transition: transform var(--aurora-transition), box-shadow var(--aurora-transition) !important;
 }
-.cardOverlayContainer:hover,
-.cardContent:hover {
-  transform: translateY(-3px) scale(var(--aurora-card-hover));
-  box-shadow: var(--aurora-shadow);
-}
-.cardImageContainer,
-.cardPadder {
-  border-radius: var(--aurora-radius) var(--aurora-radius) 0 0;
-}
-.cardOverlayContainer .cardScalable {
-  border-radius: var(--aurora-radius);
+
+/* 悬浮：轻微上浮 + 极光光晕 */
+.backdropCard:hover,
+.cardBox:hover {
+  transform: translateY(-4px) scale(1.03);
+  box-shadow: var(--aurora-glow-hover);
 }
 
-/* ---------- 毛玻璃信息层 ---------- */
-.cardOverlayContainer .cardOverlayButtonContainer,
-.itemDetailPage .detailImageContainer,
-.layout-mobile .cardOverlayContainer {
+.cardImageContainer {
+  border-radius: var(--aurora-radius) var(--aurora-radius) 0 0;
+}
+
+/* ============================================================================
+ * 4. 卡片信息层：玻璃毛边
+ * ========================================================================== */
+.cardOverlayContainer {
   backdrop-filter: blur(var(--aurora-blur));
   -webkit-backdrop-filter: blur(var(--aurora-blur));
 }
 
-/* ---------- 顶栏毛玻璃 ---------- */
+/* ============================================================================
+ * 5. 顶栏：玻璃拟态 + 底部极光渐变线（品牌签名）
+ * ========================================================================== */
 .skinHeader-withBackground,
-.skinHeader.focuscontainer-x.skinHeader-withBackground {
-  background-color: var(--aurora-glass-bg) !important;
+.tabs-viewmenubar-backgroundcontainer:not(.tabs-viewmenubar-backgroundcontainer-tv) {
+  background-color: var(--aurora-glass) !important;
   backdrop-filter: blur(var(--aurora-blur)) saturate(160%);
   -webkit-backdrop-filter: blur(var(--aurora-blur)) saturate(160%);
-  border-bottom: 1px solid var(--aurora-glass-border);
+  border-bottom: none !important;
+  position: relative;
 }
 
-/* ---------- 滚动条美化（细 + 圆角 + 悬浮高亮） ---------- */
+/* 顶栏底部一条细细的极光渐变线，是 Aurora 的视觉签名 */
+.skinHeader-withBackground::after,
+.tabs-viewmenubar-backgroundcontainer:not(.tabs-viewmenubar-backgroundcontainer-tv)::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background: var(--aurora-gradient);
+  opacity: .55;
+  pointer-events: none;
+}
+
+/* ============================================================================
+ * 6. 滚动条：极光渐变
+ * ========================================================================== */
 ::-webkit-scrollbar { width: 9px; height: 9px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb {
-  background: var(--aurora-scrollbar);
+  background: var(--aurora-gradient-soft);
   border-radius: 99px;
   border: 2px solid transparent;
   background-clip: content-box;
 }
-::-webkit-scrollbar-thumb:hover { background: var(--aurora-accent); background-clip: content-box; }
+::-webkit-scrollbar-thumb:hover {
+  background: var(--aurora-gradient);
+  background-clip: content-box;
+}
 
-/* ---------- 按钮 / 焦点态 ---------- */
+/* ============================================================================
+ * 7. 按钮 / 焦点态：极光强调
+ * ========================================================================== */
 .button-flat:hover,
 .paper-icon-button-light:hover {
   background-color: var(--aurora-accent-soft) !important;
 }
 
-/* ---------- 选中态品牌色 ---------- */
-.cardOverlayContainer.selectedCard {
+/* ============================================================================
+ * 8. 选中卡片：极光渐变描边 + 光晕
+ * ========================================================================== */
+.cardOverlayContainer.selectedCard,
+.card.selectedCard {
   box-shadow: var(--aurora-glow);
+  border-color: transparent;
+  background-image: var(--aurora-gradient);
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+  border: 1px solid transparent;
 }
 
-/* ---------- 背景虚化 ---------- */
-.backgroundContainer,
-.itemBackdrop {
-  filter: blur(14px) brightness(.72) saturate(1.1);
+/* ============================================================================
+ * 9. 详情页背景：柔和虚化 + 深空压暗
+ * ========================================================================== */
+.itemBackdrop,
+.backgroundContainer {
+  filter: blur(16px) brightness(.68) saturate(1.15);
   transform: scale(1.08);
 }
 
-/* ---------- 顶栏品牌色点缀 ---------- */
-.skinHeader .headerRight .emby-button:hover,
-.skinHeader .headerRight .paper-icon-button-light:hover {
-  color: var(--aurora-accent) !important;
+/* ============================================================================
+ * 10. 焦点轮廓：极光色
+ * ========================================================================== */
+:focus-visible {
+  outline: 2px solid var(--aurora-accent) !important;
+  outline-offset: 2px;
 }
 
-/* ---------- 加载页淡出后，给首屏一个平滑入场 ---------- */
-.aurora-ready .homeLibraryContainer {
+/* ============================================================================
+ * 11. 首屏平滑入场
+ * ========================================================================== */
+.aurora-ready .homeSectionsContainer {
   animation: aurora-home-in .5s ease both;
 }
 @keyframes aurora-home-in {

@@ -1,14 +1,15 @@
 /*!
  * EmbyAurora — carousel.js
  * =============================================================================
- *  沉浸式首页轮播：复用首页 section 已有卡片数据（零 token 处理），
- *  跨 Emby 4.8/4.9 稳定运行。
+ *  沉浸式首页轮播（数据驱动，参考 Nolovenodie/emby-crx 的成熟实现）
  *
- *  关键点：
- *   - Emby 卡片海报是 .cardImage div 的「背景图 + data-src 懒加载」，不是 <img>，
- *     因此同时支持 <img> 与背景图两种提取方式。
- *   - 背景优先用横版 Backdrop（由海报 URL 推导），加载失败自动回退竖版海报。
- *   - Emby 是 SPA，首页 section 异步渲染，用 MutationObserver 持续监听，导航回来也能挂载。
+ *  数据来源：window.ApiClient（Emby 前端全局 API 客户端）
+ *   - ApiClient.getItems(userId, query)     查询最新电影/剧集（含 Overview/年份）
+ *   - ApiClient.getImageUrl(itemId, {type}) 取 Backdrop 横版图 / Logo 图
+ *  跳转：window.appRouter.showItem(id)（通过 AURORA.router 获取）
+ *
+ *  之前「复用卡片 DOM」的思路是错的——Emby 卡片海报是 .cardImage 背景图、且拿不到
+ *  Overview/Logo/Backdrop，数据也不可控。改为 API 驱动后数据完整、图高清、跨版本稳定。
  * =============================================================================
  */
 (function (global) {
@@ -16,155 +17,145 @@
 
   var CONFIG = (global.AURORA_CONFIG && global.AURORA_CONFIG.carousel) || {};
   var INTERVAL = Number(CONFIG.interval) || 8000;
-  var MAX = Number(CONFIG.maxCount) || 8;
+  var MAX = Number(CONFIG.maxCount) || 10;
+  var mounted = false;
 
-  function getServerId() {
-    var m = location.href.match(/[?&]serverId=([^&]+)/);
-    if (m) return m[1];
-    var api = global.ApiClient;
-    if (api && api.serverId) { try { return api.serverId(); } catch (e) {} }
-    return '';
-  }
+  function api() { return global.AURORA ? global.AURORA.api() : global.ApiClient; }
 
-  // 从卡片元素提取海报 URL（兼容 <img> 与 .cardImage 背景图两种渲染）
-  function extractPoster(card) {
-    // 1) <img> 标签
-    var img = card.querySelector('img.cardImage, .cardImageContainer img, img');
-    if (img) {
-      var s = img.getAttribute('src') || img.getAttribute('data-src') || img.getAttribute('data-original') || '';
-      if (s && s.indexOf('data:') !== 0) return s;
+  // 兼容 Promise 与同步返回
+  function unwrap(maybePromise, cb) {
+    if (maybePromise && typeof maybePromise.then === 'function') {
+      maybePromise.then(cb, function () { cb(null); });
+    } else {
+      cb(maybePromise);
     }
-    // 2) .cardImage div 的 data-src（懒加载海报）
-    var ci = card.querySelector('.cardImage, .cardImageContainer .cardImage, [data-src]');
-    if (ci) {
-      var ds = ci.getAttribute('data-src');
-      if (ds && ds.indexOf('data:') !== 0) return ds;
-    }
-    // 3) .cardImage 内联背景图 background-image:url(...)
-    if (ci) {
-      var m = (ci.getAttribute('style') || '').match(/background-image:\s*url\(["']?([^"')]+)["']?\)/i);
-      if (m && m[1]) return m[1];
-    }
-    return '';
   }
 
-  // 由海报 URL 推导横版 Backdrop（背景图用），失败回退用海报本身
-  function toBackdrop(poster) {
-    if (!poster) return '';
-    var b = poster.replace(/\/Images\/Primary(?=[?/]|$)/, '/Images/Backdrop');
-    b = b.replace(/maxWidth=\d+/g, 'maxWidth=1920');
-    b = b.replace(/maxHeight=\d+/g, 'maxHeight=1080');
-    return b;
-  }
-
-  function isHome() {
-    // 仅在首页收集：首页有媒体库 section 容器
-    return !!document.querySelector('.homeLibraryContainer, .verticalSection, [class*="view-home"]');
-  }
-
-  function collectCards() {
-    var cards = [];
-    var seen = {};
-    if (!isHome()) return cards;
-
-    // 卡片选择器：覆盖 Emby 4.8/4.9 的 .card / .backdropCard
-    var cardEls = document.querySelectorAll('.card, .backdropCard');
-    for (var i = 0; i < cardEls.length; i++) {
-      var card = cardEls[i];
-      var id = card.getAttribute('data-id') || card.getAttribute('data-itemid');
-      if (!id || seen[id]) continue;
-
-      var titleEl = card.querySelector('.cardText, .cardTitle, .itemName');
-      var title = titleEl ? titleEl.textContent.replace(/\s+/g, ' ').trim() : '';
-      if (!title) continue;
-
-      var poster = extractPoster(card);
-      if (!poster) continue;
-
-      seen[id] = 1;
-      cards.push({
-        id: id,
-        title: title,
-        poster: poster,
-        backdrop: toBackdrop(poster),
-        serverId: card.getAttribute('data-serverid') || card.getAttribute('data-serverId') || getServerId(),
-        type: card.getAttribute('data-type') || ''
+  // 查询最新电影/剧集（含 Overview、年份，一次拿全，避免逐个 getItem）
+  function fetchItems(cb) {
+    var client = api();
+    if (!client || !client.getItems || !client.getCurrentUserId) { cb([]); return; }
+    var userId;
+    try { userId = client.getCurrentUserId(); } catch (e) { cb([]); return; }
+    var query = {
+      IncludeItemTypes: 'Movie,Series',
+      SortBy: 'ProductionYear, PremiereDate, SortName',
+      SortOrder: 'Descending',
+      Recursive: true,
+      Limit: MAX,
+      Fields: 'ProductionYear,Overview,Genres',
+      ImageTypeLimit: 1,
+      EnableUserData: false,
+      EnableTotalRecordCount: false
+    };
+    try {
+      unwrap(client.getItems(userId, query), function (result) {
+        var items = (result && result.Items) || [];
+        cb(items);
       });
-      if (cards.length >= MAX) break;
+    } catch (e) { cb([]); }
+  }
+
+  function getImageUrl(itemId, type) {
+    var client = api();
+    if (!client || !client.getImageUrl) return '';
+    try {
+      var url = client.getImageUrl(itemId, { type: type, maxWidth: 3000 });
+      return url || '';
+    } catch (e) { return ''; }
+  }
+
+  function showItem(id) {
+    var routerFn = global.AURORA && global.AURORA.router;
+    if (routerFn) {
+      routerFn(function (router) {
+        if (router && router.showItem) {
+          try { router.showItem(id); return; } catch (e) {}
+        }
+        location.hash = '#/item?id=' + encodeURIComponent(id);
+      });
+    } else {
+      location.hash = '#/item?id=' + encodeURIComponent(id);
     }
-    return cards;
   }
 
   function esc(s) {
-    return String(s).replace(/[&<>"]/g, function (c) {
+    return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
     });
   }
-  function escUrl(s) {
-    return String(s).replace(/'/g, '\\\'').replace(/"/g, '&quot;');
-  }
 
-  function build(cards) {
+  function build(items) {
     var container = document.createElement('div');
     container.className = 'aurora-carousel';
 
-    var track = '<div class="aurora-carousel__track">' + cards.map(function (c, i) {
-      return '<div class="aurora-carousel__slide' + (i === 0 ? ' is-active' : '') + '" data-id="' + esc(c.id) + '" data-serverid="' + esc(c.serverId) + '">' +
-        '<img class="aurora-carousel__bg" alt="" data-fallback="' + escUrl(c.poster) + '" src="' + escUrl(c.backdrop) + '" onerror="if(this.src!==this.dataset.fallback){this.src=this.dataset.fallback}">' +
-        '<div class="aurora-carousel__shade"></div>' +
-        '<div class="aurora-carousel__content">' +
-          '<img class="aurora-carousel__poster" src="' + escUrl(c.poster) + '" alt="">' +
+    var slides = items.map(function (item, i) {
+      var id = item.Id || '';
+      var name = item.Name || '';
+      var overview = item.Overview || '';
+      var year = item.ProductionYear || '';
+      var backdrop = getImageUrl(id, 'Backdrop');
+      var logo = (item.ImageTags && item.ImageTags.Logo) ? getImageUrl(id, 'Logo') : '';
+      var typeLabel = item.Type === 'Series' ? '剧集' : (item.Type === 'Movie' ? '电影' : '');
+      var meta = [typeLabel, year].filter(Boolean).join(' · ');
+
+      var logoHtml = logo ? '<img class="aurora-carousel__logo" src="' + esc(logo) + '" alt="">' : '';
+      var playIcon = '<svg class="aurora-carousel__playicon" viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M8 5v14l11-7z"/></svg>';
+      return '<div class="aurora-carousel__slide' + (i === 0 ? ' is-active' : '') + '" data-id="' + esc(id) + '">' +
+        (backdrop ? '<img class="aurora-carousel__bg" src="' + esc(backdrop) + '" alt="">' : '<div class="aurora-carousel__bg aurora-carousel__bg--empty"></div>') +
+        '<div class="aurora-carousel__auroraline"></div>' +
+        '<div class="aurora-carousel__glassbar">' +
           '<div class="aurora-carousel__info">' +
-            '<h2 class="aurora-carousel__title">' + esc(c.title) + '</h2>' +
-            '<div class="aurora-carousel__meta">' + esc(c.type || 'Emby') + '</div>' +
+            logoHtml +
+            '<h2 class="aurora-carousel__title">' + esc(name) + '</h2>' +
+            (meta ? '<div class="aurora-carousel__meta">' + esc(meta) + '</div>' : '') +
+            (overview ? '<p class="aurora-carousel__desc">' + esc(overview) + '</p>' : '') +
             '<div class="aurora-carousel__actions">' +
-              '<button class="aurora-carousel__btn aurora-carousel__btn--play" data-action="play">▶ 播放</button>' +
-              '<button class="aurora-carousel__btn aurora-carousel__btn--detail" data-action="detail">详情</button>' +
+              '<button class="aurora-carousel__btn aurora-carousel__btn--play" data-action="detail">' + playIcon + '播放</button>' +
+              '<button class="aurora-carousel__btn aurora-carousel__btn--detail" data-action="detail">详细信息</button>' +
             '</div>' +
           '</div>' +
         '</div>' +
       '</div>';
-    }).join('') + '</div>';
+    }).join('');
 
-    track += '<button class="aurora-carousel__arrow aurora-carousel__arrow--prev">‹</button>' +
-             '<button class="aurora-carousel__arrow aurora-carousel__arrow--next">›</button>' +
-             '<div class="aurora-carousel__dots">' + cards.map(function (c, i) {
-               return '<button class="aurora-carousel__dot' + (i === 0 ? ' is-active' : '') + '" data-index="' + i + '"></button>';
-             }).join('') + '</div>';
-
-    container.innerHTML = track;
+    container.innerHTML =
+      '<div class="aurora-carousel__track">' + slides + '</div>' +
+      (items.length > 1
+        ? '<button class="aurora-carousel__arrow aurora-carousel__arrow--prev">‹</button>' +
+          '<button class="aurora-carousel__arrow aurora-carousel__arrow--next">›</button>' +
+          '<div class="aurora-carousel__dots">' + items.map(function (_, i) {
+            return '<button class="aurora-carousel__dot' + (i === 0 ? ' is-active' : '') + '" data-index="' + i + '"></button>';
+          }).join('') + '</div>'
+        : '');
     return container;
   }
 
-  function openItem(id, serverId, play) {
-    var hash = '#/item?id=' + encodeURIComponent(id);
-    if (serverId) hash += '&serverId=' + encodeURIComponent(serverId);
-    if (play) hash += '&autoplay=true';
-    location.hash = hash;
-  }
-
-  function mount(cards) {
-    // 优先插到首页第一个媒体库 section 之前；多个选择器兜底
-    var anchor = document.querySelector('.homeLibraryContainer .verticalSection, .verticalSection, .homeSection, .pageTabContent');
+  function mount(items) {
+    if (mounted) return;
+    // 挂到首页媒体库 section 容器之前（参考 emby-crx 的 .homeSectionsContainer）
+    var anchor = document.querySelector('.homeSectionsContainer, .homeLibraryContainer, .view:not(.hide) .pageTabContent');
     if (!anchor) return;
 
-    var el = build(cards);
+    var el = build(items);
     anchor.parentNode.insertBefore(el, anchor);
+    mounted = true;
 
     var slides = Array.prototype.slice.call(el.querySelectorAll('.aurora-carousel__slide'));
     var dots = Array.prototype.slice.call(el.querySelectorAll('.aurora-carousel__dot'));
+    if (!slides.length) return;
+
     var idx = 0;
     var timer = null;
 
     function go(n) {
-      if (!slides.length) return;
       if (n < 0) n = slides.length - 1;
       if (n >= slides.length) n = 0;
       slides[idx].classList.remove('is-active');
-      dots[idx].classList.remove('is-active');
+      if (dots[idx]) dots[idx].classList.remove('is-active');
       idx = n;
       slides[idx].classList.add('is-active');
-      dots[idx].classList.add('is-active');
+      if (dots[idx]) dots[idx].classList.add('is-active');
     }
     function play() {
       stop();
@@ -185,39 +176,34 @@
     el.addEventListener('click', function (e) {
       var btn = e.target && e.target.closest ? e.target.closest('[data-action]') : null;
       if (!btn) return;
-      var slide = slides[idx];
-      var id = slide.getAttribute('data-id');
-      var sid = slide.getAttribute('data-serverid');
-      var action = btn.getAttribute('data-action');
-      if (action === 'detail') openItem(id, sid);
-      else if (action === 'play') openItem(id, sid, true);
+      var id = slides[idx].getAttribute('data-id');
+      if (id) showItem(id);
     });
 
     play();
   }
 
   function tryInit() {
-    if (document.querySelector('.aurora-carousel')) return; // 已挂载
-    var cards = collectCards();
-    if (cards.length >= 2) {
-      mount(cards);
-      document.body.classList.add('aurora-carousel-active');
-    }
+    if (mounted || !(global.AURORA && global.AURORA.isHome())) return;
+    fetchItems(function (items) {
+      var usable = items.filter(function (it) { return it && it.Id; });
+      if (usable.length >= 1) mount(usable.slice(0, MAX));
+    });
   }
 
   function start() {
     tryInit();
-    // Emby SPA：首页 section 异步渲染、导航切换会重建 DOM，用 MutationObserver 持续监听
+    // SPA：首页异步渲染 + 导航切换，用 MutationObserver 持续监听
     if (global.MutationObserver) {
       var mo = new MutationObserver(function () {
-        if (!document.querySelector('.aurora-carousel')) tryInit();
+        if (!mounted) tryInit();
       });
       mo.observe(document.body || document.documentElement, { childList: true, subtree: true });
     }
-    // 兜底：前 30 秒每 1s 补扫一次（应对 MutationObserver 遗漏或首页极慢）
+    // 兜底：前 30 秒每 1s 补扫
     var guard = 0;
     var t = setInterval(function () {
-      if (document.querySelector('.aurora-carousel')) { clearInterval(t); return; }
+      if (mounted) { clearInterval(t); return; }
       if (++guard > 30) { clearInterval(t); return; }
       tryInit();
     }, 1000);

@@ -3,12 +3,13 @@
  * =============================================================================
  *  核心加载器（零依赖，单一注入点）
  *
- *  职责：读取配置 → 挂载预热加载页 → 等待 Emby 就绪 → 应用主题/Logo/轮播/功能增强
+ *  职责：Emby 检测 → 挂载预热加载页 → 等待 ApiClient 就绪 → 应用主题/Logo/加载功能模块
  *
- *  设计原则：
- *   1. 零依赖：不引入 jQuery / md5 等任何第三方库，纯原生 ES5。
- *   2. 首帧无闪烁：加载页 HTML/CSS 全部内嵌，注入后立即渲染，无额外网络请求。
- *   3. 防御式：Emby DOM 选择器做多版本兜底，选择器失效只降级不报错。
+ *  设计原则（基于对 Nolovenodie/emby-crx、bpking1/embyExternalUrl 等成熟项目的源码调研）：
+ *   1. 零依赖：静态注入 index.html，脚本直接运行在页面上下文，可直接访问
+ *      window.ApiClient / window.require / window.appRouter，无需 jQuery/md5/BroadcastChannel。
+ *   2. 就绪信号 = window.ApiClient（轮播/外部播放器等都依赖它，比猜 DOM 更可靠）。
+ *   3. 首帧无闪烁：加载页 HTML/CSS 全内嵌，同步挂载，无额外网络请求。
  *   4. 配置驱动：一切个性化由 window.AURORA_CONFIG 控制（install.sh 生成 config.js）。
  * =============================================================================
  */
@@ -34,9 +35,6 @@
    * ======================================================================= */
   function each(list, fn) {
     for (var i = 0; i < list.length; i++) fn(list[i], i);
-  }
-  function on(node, ev, fn) {
-    if (node && node.addEventListener) node.addEventListener(ev, fn, false);
   }
   function $(sel, root) {
     return (root || doc).querySelector(sel);
@@ -69,10 +67,17 @@
   }
 
   /* =========================================================================
-   * 2. 预热加载页（核心卖点 —— 三种风格，全内嵌，零闪烁）
+   * 2. Emby 环境检测（非 Emby 页面不运行任何注入）
    * ======================================================================= */
+  function isEmby() {
+    var meta = doc.querySelector('meta[name="application-name"]');
+    if (meta && meta.getAttribute('content') === 'Emby') return true;
+    return !!(doc.querySelector('.accent-emby') || global.ApiClient || global.Emby);
+  }
 
-  // 极光配色（默认）
+  /* =========================================================================
+   * 3. 预热加载页（三种风格，全内嵌，零闪烁）
+   * ======================================================================= */
   var auroraPalette = LOADING.aurora || {
     bg: 'radial-gradient(120% 120% at 50% 0%, #10102a 0%, #0a0a18 55%, #050510 100%)',
     blob1: '#6d5dfc', blob2: '#22d3ee', blob3: '#f472b6',
@@ -86,8 +91,7 @@
     '.aurora-loading.is-show{opacity:1;}',
     '.aurora-loading.is-hide{opacity:0;pointer-events:none;}',
     '.aurora-loading__bg{position:absolute;inset:0;background:' + auroraPalette.bg + ';}',
-    '.aurora-loading__blob{position:absolute;border-radius:50%;filter:blur(90px);opacity:.55;' +
-      'will-change:transform;}',
+    '.aurora-loading__blob{position:absolute;border-radius:50%;filter:blur(90px);opacity:.55;will-change:transform;}',
     '.aurora-loading__blob--1{width:52vmax;height:52vmax;left:-14vmax;top:-18vmax;' +
       'background:' + auroraPalette.blob1 + ';animation:aurora-drift1 11s ease-in-out infinite;}',
     '.aurora-loading__blob--2{width:44vmax;height:44vmax;right:-12vmax;top:6vmax;' +
@@ -118,13 +122,11 @@
     '@keyframes aurora-slide{0%{left:-45%}100%{left:105%}}'
   ].join('\n');
 
-  // 影院黑金
   var cinemaCSS = [
     '.aurora-loading.is-cinema .aurora-loading__bg{background:radial-gradient(90% 70% at 50% -10%,#1a1408 0%,#000 60%);}',
     '.aurora-loading.is-cinema .aurora-loading__beam{position:absolute;top:-30%;left:50%;width:140%;height:60%;' +
       'transform:translateX(-50%);background:linear-gradient(180deg,rgba(212,175,55,.22),transparent 70%);' +
-      'clip-path:polygon(46% 0,54% 0,78% 100%,22% 100%);filter:blur(2px);' +
-      'animation:cinema-sway 5s ease-in-out infinite;}',
+      'clip-path:polygon(46% 0,54% 0,78% 100%,22% 100%);filter:blur(2px);animation:cinema-sway 5s ease-in-out infinite;}',
     '.aurora-loading.is-cinema .aurora-loading__film{position:absolute;bottom:14%;left:0;right:0;height:8px;' +
       'display:flex;gap:8px;justify-content:center;opacity:.5;}',
     '.aurora-loading.is-cinema .aurora-loading__film i{width:22px;height:8px;border-radius:2px;' +
@@ -135,7 +137,6 @@
     '@keyframes cinema-film{0%{opacity:.2}50%{opacity:1}100%{opacity:.2}}'
   ].join('\n');
 
-  // 极简
   var minimalCSS = [
     '.aurora-loading.is-minimal .aurora-loading__bg{background:#0b0d12;}',
     '.aurora-loading.is-minimal .aurora-loading__blob{display:none;}',
@@ -143,6 +144,29 @@
     '.aurora-loading.is-minimal .aurora-loading__bar{height:2px;}',
     '.aurora-loading.is-minimal .aurora-loading__bar i{background:#e8eaf6;}'
   ].join('\n');
+
+  function esc(s) {
+    return String(s).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+  }
+  function repeat(n, s) { var r = ''; for (var i = 0; i < n; i++) r += s; return r; }
+
+  function renderLogo() {
+    if (LOGO.type === 'image') {
+      var src = LOGO.imageUrl || (basePath + '/logo/logo.svg');
+      return '<img src="' + esc(src) + '" alt="logo">';
+    }
+    if (LOGO.type === 'text') {
+      var t = LOGO.text || 'AURORA';
+      var c = LOGO.color || '#ffffff';
+      return '<svg viewBox="0 0 200 60" xmlns="http://www.w3.org/2000/svg">' +
+        '<text x="100" y="42" text-anchor="middle" font-size="' + (LOGO.fontSize || 34) +
+        '" fill="' + esc(c) + '" font-weight="700" font-family="Segoe UI,PingFang SC,Microsoft YaHei,sans-serif" ' +
+        'letter-spacing="4">' + esc(t) + '</text></svg>';
+    }
+    return '<img src="' + basePath + '/logo/logo.svg" alt="logo">';
+  }
 
   function buildLoading() {
     var el = doc.createElement('div');
@@ -167,49 +191,23 @@
       '</div>';
     return el;
   }
-  function repeat(n, s) { var r = ''; for (var i = 0; i < n; i++) r += s; return r; }
-  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) {
-    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
-  }); }
-
-  function renderLogo() {
-    if (LOGO.type === 'image') {
-      var src = LOGO.imageUrl || (basePath + '/logo/logo.svg');
-      return '<img src="' + esc(src) + '" alt="logo">';
-    }
-    if (LOGO.type === 'text') {
-      var t = LOGO.text || 'AURORA';
-      var c = LOGO.color || '#ffffff';
-      return '<svg viewBox="0 0 200 60" xmlns="http://www.w3.org/2000/svg">' +
-        '<text x="100" y="42" text-anchor="middle" font-size="' + (LOGO.fontSize || 34) +
-        '" fill="' + esc(c) + '" font-weight="700" font-family="Segoe UI,PingFang SC,Microsoft YaHei,sans-serif" ' +
-        'letter-spacing="4">' + esc(t) + '</text></svg>';
-    }
-    // 默认：图片 logo
-    return '<img src="' + basePath + '/logo/logo.svg" alt="logo">';
-  }
 
   /* =========================================================================
-   * 3. 等待 Emby 就绪
+   * 4. 等待 Emby 就绪（以 ApiClient 为信号，轮播/播放器都依赖它）
    * ======================================================================= */
-  function embyReadyCheck() {
-    // Emby 首页常见容器（多版本兜底）
-    if ($('.homeLibraryContainer') || $('.itemContainer') || $('.cardContent') ||
-        $('.sections') || $('.pageTabContent') || (global.Emby && global.Emby.Page)) {
-      return true;
-    }
-    return false;
+  function embyReady() {
+    return !!(global.ApiClient && global.ApiClient.getCurrentUserId);
   }
 
   function waitForEmby(cb, tries) {
     tries = tries || 0;
-    if (embyReadyCheck()) { cb(); return; }
-    if (tries > 100) { cb(); return; } // 10s 兜底
+    if (embyReady()) { cb(); return; }
+    if (tries > 200) { cb(); return; } // 20s 兜底
     setTimeout(function () { waitForEmby(cb, tries + 1); }, 100);
   }
 
   /* =========================================================================
-   * 4. 模块加载器（配置驱动，按需加载）
+   * 5. 模块加载器（配置驱动，按需加载）
    * ======================================================================= */
   var modules = {
     carousel:  { js: basePath + '/carousel/carousel.js', css: basePath + '/carousel/carousel.css' },
@@ -236,26 +234,24 @@
   }
 
   /* =========================================================================
-   * 5. 主题应用
+   * 6. 主题应用
    * ======================================================================= */
   function applyTheme() {
     loadCSS('aurora-base', basePath + '/aurora.css');
     if (THEME.name && THEME.name !== 'default') {
       loadCSS('aurora-theme', basePath + '/themes/' + THEME.name + '.css');
     }
-    // 顶栏品牌色
     if (THEME.accent) {
       injectCSS('aurora-accent', ':root{--aurora-accent:' + THEME.accent + ';}');
     }
   }
 
   /* =========================================================================
-   * 6. Logo 替换（顶栏）
+   * 7. Logo 替换（顶栏，多版本兜底）
    * ======================================================================= */
   function applyHeaderLogo() {
     if (LOGO.header === false || LOGO.header === 'false') return;
     var logoHtml = renderLogo();
-    // 多重选择器兜底，覆盖 Emby 4.8 / 4.9 顶栏 logo 位置
     var slots = $all('.skinHeader .pageTitle, .skinHeader a.logo, .headerLogo, ' +
                      '.skinHeader .headerLeft a, a[data-role="logo"]');
     each(slots, function (slot) {
@@ -264,14 +260,12 @@
       span.className = 'aurora-hlogo';
       span.style.cssText = 'display:inline-flex;align-items:center;height:100%;';
       span.innerHTML = logoHtml;
-      // 隐藏原文字，保留链接结构
       if (!LOGO.keepText) {
         var txt = slot.querySelector('.pageTitle');
         if (txt) txt.style.display = 'none';
       }
       slot.insertBefore(span, slot.firstChild);
     });
-    // CSS 兜底：如果 DOM 结构特殊，直接注入样式
     injectCSS('aurora-hlogo-css',
       '.skinHeader .aurora-hlogo{display:inline-flex!important;align-items:center;}' +
       '.skinHeader .aurora-hlogo img,.skinHeader .aurora-hlogo svg{height:32px;width:auto;max-width:160px;}'
@@ -279,54 +273,64 @@
   }
 
   /* =========================================================================
-   * 7. 主流程
+   * 8. 主流程
    * ======================================================================= */
   function main() {
-    // 1) 注入加载页样式（内嵌）
+    if (!isEmby()) return;
+
     injectCSS('aurora-loading-css', loadingCSS + cinemaCSS + minimalCSS);
 
-    // 2) 挂载加载页（立即、同步，保证首帧）
-    // 注入点在 </head> 之前，此刻 document.body 尚未创建，故回退到 documentElement，
-    // 否则 body 为 null 会抛 TypeError 并中断整个脚本。
+    // 挂载加载页（同步，保证首帧；</head> 前 body 为 null，回退 documentElement）
     var loadingEl = null;
     if (!(LOADING.enabled === false || LOADING.enabled === 'false')) {
       loadingEl = buildLoading();
       (doc.body || doc.documentElement).appendChild(loadingEl);
-      // 强制回流后显示，触发淡入
       loadingEl.offsetHeight;
       loadingEl.classList.add('is-show');
     }
 
-    // 3) 应用主题（异步加载 CSS，不阻塞加载页）
     applyTheme();
 
-    // 4) 等待 Emby 就绪后收尾
     waitForEmby(function () {
-      // 先标记就绪：此后动态加载的功能模块（carousel/speed/... 异步注入）调用
-      // AURORA.onReady 时会立即执行，避免「模块加载晚于回调派发」导致的回调丢失。
       global.AURORA._ready = true;
       applyHeaderLogo();
       loadEnabledModules();
-      // 淡出并移除加载页
       if (loadingEl) {
         loadingEl.classList.add('is-hide');
         setTimeout(function () {
           if (loadingEl.parentNode) loadingEl.parentNode.removeChild(loadingEl);
         }, 420);
       }
-      // 派发已排队的回调（通常为空，动态模块会在 _ready=true 后即时执行）
       each(onReady, function (fn) { try { fn(); } catch (e) {} });
       onReady.length = 0;
     });
   }
 
+  /* =========================================================================
+   * 9. 对外工具（供 carousel / external-player 等模块使用）
+   * ======================================================================= */
   global.AURORA = global.AURORA || {};
   global.AURORA.onReady = function (fn) {
     if (global.AURORA._ready) { try { fn(); } catch (e) {} }
     else { onReady.push(fn); }
   };
+  // 获取 ApiClient（轮播/播放器/评分的统一入口）
+  global.AURORA.api = function () { return global.ApiClient; };
+  // 获取 appRouter（跳转详情页用），Emby 通过 require(["appRouter"]) 加载
+  global.AURORA.router = function (cb) {
+    if (global.appRouter) { cb(global.appRouter); return; }
+    if (global.require) {
+      try {
+        global.require(['appRouter'], function (r) { cb(r && r.default ? r.default : r); });
+        return;
+      } catch (e) {}
+    }
+    cb(null);
+  };
+  // 是否在首页（Emby 首页 URL 含 "!/home"）
+  global.AURORA.isHome = function () {
+    return location.href.indexOf('!/home') !== -1 || location.hash.indexOf('home') !== -1;
+  };
 
-  // 立即启动：bootstrap 注入在 </head> 前，documentElement 必然已存在，
-  // 同步挂载加载页可做到「Emby 渲染任何内容前」即出现，杜绝白屏闪烁。
   main();
 })(window);

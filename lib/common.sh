@@ -2,6 +2,10 @@
 # =============================================================================
 #  EmbyAurora · lib/common.sh
 #  公共函数库：日志 / 备份 / 幂等注入 / 资源拷贝 / 持久化
+#
+#  部署后端抽象：DEPLOY_MODE = docker | bare
+#    · docker：操作容器（docker exec / docker cp）
+#    · bare  ：操作宿主机文件系统（cp / sed，适用于裸机 / 套件安装）
 # =============================================================================
 
 C_INFO='\033[1;36m'; C_OK='\033[1;32m'; C_WARN='\033[1;33m'
@@ -29,26 +33,56 @@ confirm() {
   [ "$ans" = "y" ] || [ "$ans" = "Y" ]
 }
 
+# 部署后端（默认 docker，可由 detect 阶段改写为 bare）
+DEPLOY_MODE="${DEPLOY_MODE:-docker}"
+
+# 判断文件是否存在于目标端
+rem_file_exists() {
+  if [ "$DEPLOY_MODE" = "bare" ]; then [ -f "$1" ]
+  else docker exec "$CONTAINER" sh -c "[ -f '$1' ]" 2>/dev/null; fi
+}
+
+# 判断目标端文件是否包含某字符串（幂等注入用）
+rem_grep() {
+  if [ "$DEPLOY_MODE" = "bare" ]; then grep -q "$1" "$2" 2>/dev/null
+  else docker exec "$CONTAINER" grep -q "$1" "$2" 2>/dev/null; fi
+}
+
+# 备份路径（docker 用 /config，bare 用 dashboard-ui 同级）
+aurora_backup_dir() {
+  if [ "$DEPLOY_MODE" = "bare" ]; then echo "${DASHBOARD_DIR%/}/../aurora-backups"
+  else echo "/config/backups/aurora"; fi
+}
+
 # 备份 index.html（带时间戳）
 backup_index() {
-  docker exec "$CONTAINER" sh -c "
-    mkdir -p /config/backups/aurora
-    cp '$INDEX_FILE' \"/config/backups/aurora/index.html.bak.\$(date +%Y%m%d-%H%M%S)\"
-  " 2>/dev/null && c_ok "✓ index.html 已备份到 /config/backups/aurora/"
+  local bd
+  bd="$(aurora_backup_dir)"
+  if [ "$DEPLOY_MODE" = "bare" ]; then
+    mkdir -p "$bd"
+    cp "$INDEX_FILE" "$bd/index.html.bak.$(date +%Y%m%d-%H%M%S)"
+  else
+    docker exec "$CONTAINER" sh -c "
+      mkdir -p '$bd'
+      cp '$INDEX_FILE' '$bd/index.html.bak.'\$(date +%Y%m%d-%H%M%S)
+    " 2>/dev/null
+  fi
+  c_ok "✓ index.html 已备份到 $bd"
 }
 
 # 幂等注入：在 </head> 前插入 config.js + bootstrap.js（marker 存在则跳过）
 inject_index() {
-  if docker exec "$CONTAINER" grep -q "aurora/bootstrap.js" "$INDEX_FILE" 2>/dev/null; then
+  if rem_grep "aurora/bootstrap.js" "$INDEX_FILE"; then
     c_ok "✓ 已注入（跳过）"
     return 0
   fi
   backup_index
-  docker exec "$CONTAINER" sh -c "
-    sed -i '/<\/head>/i <script src=\"aurora/config.js\"></script><script src=\"aurora/bootstrap.js\"></script>' '$INDEX_FILE'
-  " 2>&1 | sed 's/^/    /'
-  # 验证
-  if docker exec "$CONTAINER" grep -q "aurora/bootstrap.js" "$INDEX_FILE" 2>/dev/null; then
+  if [ "$DEPLOY_MODE" = "bare" ]; then
+    sed -i 's#</head>#<script src="aurora/config.js"></script><script src="aurora/bootstrap.js"></script></head>#' "$INDEX_FILE"
+  else
+    docker exec "$CONTAINER" sh -c "sed -i 's#</head>#<script src=\"aurora/config.js\"></script><script src=\"aurora/bootstrap.js\"></script></head>#' '$INDEX_FILE'" 2>&1 | sed 's/^/    /'
+  fi
+  if rem_grep "aurora/bootstrap.js" "$INDEX_FILE"; then
     c_ok "✓ 注入成功"
   else
     c_err "注入失败，请检查 index.html 结构"
@@ -58,37 +92,47 @@ inject_index() {
 
 # 移除注入（卸载用）
 uninject_index() {
-  docker exec "$CONTAINER" sh -c "
-    sed -i '/aurora\/config.js/d; /aurora\/bootstrap.js/d' '$INDEX_FILE'
-  " 2>&1 | sed 's/^/    /'
+  if [ "$DEPLOY_MODE" = "bare" ]; then
+    sed -i '/aurora\/config.js/d; /aurora\/bootstrap.js/d' "$INDEX_FILE"
+  else
+    docker exec "$CONTAINER" sh -c "sed -i '/aurora\/config.js/d; /aurora\/bootstrap.js/d' '$INDEX_FILE'" 2>&1 | sed 's/^/    /'
+  fi
 }
 
-# 拷贝目录到容器
+# 拷贝目录到目标端
 push_dir() {
   local src="$1" dst="$2"
-  docker exec "$CONTAINER" sh -c "mkdir -p '$dst'" 2>/dev/null
-  docker cp "$src/." "$CONTAINER:$dst/" 2>/dev/null \
-    && c_ok "✓ 已部署资源到 $dst" \
-    || { c_err "资源拷贝失败"; return 1; }
+  if [ "$DEPLOY_MODE" = "bare" ]; then
+    mkdir -p "$dst"
+    cp -r "$src/." "$dst/" 2>/dev/null && c_ok "✓ 已部署资源到 $dst" || { c_err "资源拷贝失败"; return 1; }
+  else
+    docker exec "$CONTAINER" sh -c "mkdir -p '$dst'" 2>/dev/null
+    docker cp "$src/." "$CONTAINER:$dst/" 2>/dev/null \
+      && c_ok "✓ 已部署资源到 $dst" \
+      || { c_err "资源拷贝失败"; return 1; }
+  fi
 }
 
 # 生成 config.js（把 JSON 配置包装成 window.AURORA_CONFIG）
 gen_config_js() {
   local json_file="$1" out="$2"
-  if [ -f "$json_file" ]; then
-    # 在宿主机生成 config.js，再拷入容器
+  if [ ! -f "$json_file" ]; then
+    c_warn "未找到配置文件 $json_file，使用内置默认配置"
+    return 0
+  fi
+  if [ "$DEPLOY_MODE" = "bare" ]; then
+    mkdir -p "$(dirname "$out")"
+    { echo 'window.AURORA_CONFIG = '; cat "$json_file"; echo ';'; } > "$out"
+  else
     {
       echo 'window.AURORA_CONFIG = '
       cat "$json_file"
       echo ';'
     } > /tmp/aurora-config.js
-    docker cp /tmp/aurora-config.js "$CONTAINER:$out" 2>/dev/null \
-      && c_ok "✓ 配置已写入 $out" \
-      || { c_err "配置写入失败"; return 1; }
+    docker cp /tmp/aurora-config.js "$CONTAINER:$out" 2>/dev/null || { c_err "配置写入失败"; rm -f /tmp/aurora-config.js; return 1; }
     rm -f /tmp/aurora-config.js
-  else
-    c_warn "未找到配置文件 $json_file，使用内置默认配置"
   fi
+  c_ok "✓ 配置已写入 $out"
 }
 
 # 设置 JSON 配置中「某块」内某个 key 的布尔值（作用于 config.json 副本，sed 精确替换）
@@ -105,8 +149,9 @@ set_block_str() {
   sed -i -E "/\"$block\"/,/}/ s/\"$key\"[[:space:]]*:[[:space:]]*\"[^\"]*\"/\"$key\": \"$value\"/" "$file"
 }
 
-# 社区版持久化钩子（amilys 等镜像有 /config/config/ext.sh）
+# 社区版持久化钩子（仅 docker 的 amilys 等镜像有 /config/config/ext.sh）
 install_ext_hook() {
+  [ "$DEPLOY_MODE" = "bare" ] && return 0
   if [ "$EXT_HOOK" = "1" ]; then
     local hook='/config/config/ext.sh'
     docker exec "$CONTAINER" sh -c "
