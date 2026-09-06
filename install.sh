@@ -70,6 +70,51 @@ deploy() {
   fi
 }
 
+# 交互式选择要安装的功能（非 --yes 时调用）。
+# 把 config.json 复制为临时副本，按用户选择覆盖开关，随后 CONFIG_FILE 指向该副本。
+choose_features() {
+  local tmp="/tmp/aurora-config-custom.json"
+  cp "$CONFIG_FILE" "$tmp"
+  CONFIG_FILE="$tmp"
+  local ans
+
+  echo ""
+  c_info "══════════ 选择要安装的功能（回车 = 默认）══════════"
+
+  c_ask "① 预热加载页（进入首页的全屏品牌动画）？[Y/n]: "; read_input ans "y"
+  { [ "$ans" = "n" ] || [ "$ans" = "N" ]; } && set_block_bool loading enabled false "$CONFIG_FILE"
+
+  c_ask "② 首页轮播大屏（沉浸式海报轮播）？[Y/n]: "; read_input ans "y"
+  { [ "$ans" = "n" ] || [ "$ans" = "N" ]; } && set_block_bool carousel enabled false "$CONFIG_FILE"
+
+  c_ask "③ 主题（aurora=极光蓝紫 / cinema=影院黑金 / default=仅基础美化）[aurora]: "; read_input ans "aurora"
+  set_block_str theme name "$ans" "$CONFIG_FILE"
+
+  c_ask "④ 替换顶栏 Logo？[Y/n]: "; read_input ans "y"
+  { [ "$ans" = "n" ] || [ "$ans" = "N" ]; } && set_block_bool logo header false "$CONFIG_FILE"
+
+  c_ask "⑤ 播放倍速记忆（Ctrl/Cmd+↑/↓ 调速）？[Y/n]: "; read_input ans "y"
+  { [ "$ans" = "n" ] || [ "$ans" = "N" ]; } && set_block_bool features speed false "$CONFIG_FILE"
+
+  c_ask "⑥ Fluent 布局（侧边栏浮层 + 顶栏沉浸）？[Y/n]: "; read_input ans "y"
+  { [ "$ans" = "n" ] || [ "$ans" = "N" ]; } && set_block_bool features fluent false "$CONFIG_FILE"
+
+  c_ask "⑦ 外部播放器按钮（PotPlayer/VLC/IINA/MPV/复制直链）？[y/N]: "; read_input ans "n"
+  { [ "$ans" = "y" ] || [ "$ans" = "Y" ]; } && set_block_bool features extplayer true "$CONFIG_FILE"
+
+  c_ask "⑧ 豆瓣 / Bangumi 评分徽章？[y/N]: "; read_input ans "n"
+  { [ "$ans" = "y" ] || [ "$ans" = "Y" ]; } && set_block_bool features douban true "$CONFIG_FILE"
+
+  c_ask "⑨ 弹幕（需自建弹幕源）？[y/N]: "; read_input ans "n"
+  { [ "$ans" = "y" ] || [ "$ans" = "Y" ]; } && set_block_bool features danmaku true "$CONFIG_FILE"
+
+  c_ask "⑩ 第三方详情页增强 Emby-Javascript-Details（剧照/演员作品/预告片/JAV 翻译，安装时联网下载）？[y/N]: "; read_input ans "n"
+  { [ "$ans" = "y" ] || [ "$ans" = "Y" ]; } && DETAILS=1
+
+  echo ""
+  c_info "已按选择生成配置，开始部署 ..."
+}
+
 # ---- 各模式 ----
 case "$MODE" in
   detect)
@@ -102,7 +147,10 @@ case "$MODE" in
   install)
     banner
     run_health_check || exit 1
-    if [ "$YES" != "1" ]; then confirm "开始安装 EmbyAurora？" || exit 0; fi
+    if [ "$YES" != "1" ]; then
+      confirm "开始安装 EmbyAurora？" || exit 0
+      choose_features
+    fi
 
     deploy
 
@@ -110,6 +158,7 @@ case "$MODE" in
     c_ok "  ✅ EmbyAurora 安装完成！"
     c_ok "  浏览器 Ctrl+F5 / Cmd+Shift+R 强制刷新即可看到效果"
     c_ok "  容器重建后运行: bash install.sh --restore 恢复"
+    c_ok "  改配置重装: bash install.sh --yes 或 --config 自定义"
     c_ok "════════════════════════════════════"
     ;;
 esac
