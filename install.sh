@@ -16,6 +16,29 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# ---------------------------------------------------------------------------
+# 在线安装兜底：通过 `bash <(curl ...)` 执行时，BASH_SOURCE 是 /dev/fd/N，
+# SCRIPT_DIR 会被解析成 /dev/fd，找不到 lib/common.sh。此时自动下载完整仓库
+# 到临时目录后重新执行，保证「一条命令」即可安装。
+# ---------------------------------------------------------------------------
+if [ ! -f "$SCRIPT_DIR/lib/common.sh" ]; then
+  printf '\033[1;36m[信息]\033[0m 检测到在线安装，正在下载完整项目 ...\n'
+  TMP="$(mktemp -d)"
+  if command -v git >/dev/null 2>&1; then
+    git clone --depth 1 https://github.com/micimo13/emby-aurora.git "$TMP" >/dev/null 2>&1
+  else
+    curl -fsSL https://github.com/micimo13/emby-aurora/archive/refs/heads/main.tar.gz \
+      | tar -xz -C "$TMP" --strip-components=1
+  fi
+  if [ ! -f "$TMP/install.sh" ]; then
+    printf '\033[1;31m[错误]\033[0m 下载失败，请检查网络后重试\n'
+    exit 1
+  fi
+  exec bash "$TMP/install.sh" "$@"
+  exit 0
+fi
+
 source "$SCRIPT_DIR/lib/common.sh"
 source "$SCRIPT_DIR/lib/detect.sh"
 source "$SCRIPT_DIR/lib/alt-deploy.sh"
