@@ -91,6 +91,20 @@ gen_config_js() {
   fi
 }
 
+# 设置 JSON 配置中「某块」内某个 key 的布尔值（作用于 config.json 副本，sed 精确替换）
+# set_block_bool <块名> <key> <true|false> <file>
+set_block_bool() {
+  local block="$1" key="$2" value="$3" file="$4"
+  sed -i -E "/\"$block\"/,/}/ s/\"$key\"[[:space:]]*:[[:space:]]*(true|false)/\"$key\": $value/" "$file"
+}
+
+# 设置 JSON 配置中「某块」内某个 key 的字符串值
+# set_block_str <块名> <key> <value> <file>
+set_block_str() {
+  local block="$1" key="$2" value="$3" file="$4"
+  sed -i -E "/\"$block\"/,/}/ s/\"$key\"[[:space:]]*:[[:space:]]*\"[^\"]*\"/\"$key\": \"$value\"/" "$file"
+}
+
 # 社区版持久化钩子（amilys 等镜像有 /config/config/ext.sh）
 install_ext_hook() {
   if [ "$EXT_HOOK" = "1" ]; then
