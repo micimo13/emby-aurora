@@ -203,8 +203,20 @@ choose_features() {
   c_ask "⑥ Fluent 布局（侧边栏浮层 + 顶栏沉浸）？[Y/n]: "; read_input ans "y"
   { [ "$ans" = "n" ] || [ "$ans" = "N" ]; } && set_block_bool features fluent false "$CONFIG_FILE"
 
-  c_ask "⑦ 外部播放器按钮（PotPlayer/VLC/IINA/MPV/复制直链）？[y/N]: "; read_input ans "n"
-  { [ "$ans" = "y" ] || [ "$ans" = "Y" ]; } && set_block_bool features extplayer true "$CONFIG_FILE"
+  c_ask "⑦ 外部播放器按钮（下拉菜单可选 PotPlayer/VLC/IINA/MPV/复制直链）？[y/N]: "; read_input ans "n"
+  if [ "$ans" = "y" ] || [ "$ans" = "Y" ]; then
+    set_block_bool features extplayer true "$CONFIG_FILE"
+    echo "   默认播放器（部署后点按钮仍可在页面内实时切换）："
+    echo "   1) PotPlayer（默认）  2) VLC  3) IINA  4) MPV  5) 复制直链"
+    c_ask "选择 [1-5, 默认 1]: "; read_input ext "1"
+    case "$ext" in
+      2) set_block_str features externalScheme "vlc" "$CONFIG_FILE" ;;
+      3) set_block_str features externalScheme "iina" "$CONFIG_FILE" ;;
+      4) set_block_str features externalScheme "mpv" "$CONFIG_FILE" ;;
+      5) set_block_str features externalScheme "copy" "$CONFIG_FILE" ;;
+      *) set_block_str features externalScheme "potplayer" "$CONFIG_FILE" ;;
+    esac
+  fi
 
   c_ask "⑧ 豆瓣 / Bangumi 评分徽章？[y/N]: "; read_input ans "n"
   { [ "$ans" = "y" ] || [ "$ans" = "Y" ]; } && set_block_bool features douban true "$CONFIG_FILE"

@@ -20,6 +20,7 @@
   var MAX = Number(CONFIG.maxCount) || 10;
   var STYLE = String(CONFIG.style || 'immersive'); // immersive | glass | minimal
   var mounted = false;
+  var scrollBound = false;
 
   function api() { return global.AURORA ? global.AURORA.api() : global.ApiClient; }
 
@@ -143,6 +144,8 @@
 
   // 滚动：越过轮播后，顶栏恢复实底毛玻璃，保证导航可读。
   function bindScroll() {
+    if (scrollBound) return;
+    scrollBound = true;
     function onScroll() {
       var y = window.scrollY || document.documentElement.scrollTop || 0;
       var threshold = Math.round(window.innerHeight * 0.55);
@@ -224,22 +227,34 @@
     });
   }
 
+  // SPA 导航修复：Emby 离开首页会把注入的轮播元素从 DOM 移除，但 mounted 仍是 true，
+  // 导致点击左上角「主页」回来时轮播不再挂载。这里在元素被移除时重置状态。
+  function revalidate() {
+    if (!mounted) return;
+    if (document.querySelector('.aurora-carousel')) return; // 还在，无需处理
+    mounted = false;
+    var body = document.body;
+    if (body) {
+      body.classList.remove('aurora-has-carousel');
+      body.classList.remove('aurora-scrolled');
+    }
+  }
+
   function start() {
     tryInit();
     // SPA：首页异步渲染 + 导航切换，用 MutationObserver 持续监听
     if (global.MutationObserver) {
       var mo = new MutationObserver(function () {
+        revalidate();
         if (!mounted) tryInit();
       });
       mo.observe(document.body || document.documentElement, { childList: true, subtree: true });
     }
-    // 兜底：前 30 秒每 1s 补扫
-    var guard = 0;
-    var t = setInterval(function () {
-      if (mounted) { clearInterval(t); return; }
-      if (++guard > 30) { clearInterval(t); return; }
-      tryInit();
-    }, 1000);
+    // 兜底：每 1.5s 重扫（覆盖首页异步渲染 + 导航回来重新挂载）
+    setInterval(function () {
+      revalidate();
+      if (!mounted) tryInit();
+    }, 1500);
   }
 
   if (global.AURORA && global.AURORA.onReady) {

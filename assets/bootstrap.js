@@ -268,15 +268,23 @@
   }
 
   /* =========================================================================
-   * 7. Logo 替换（顶栏，多版本兜底）
-   * ======================================================================= */
+   * 7. Logo 替换（顶栏 + 登录页，多版本兜底，SPA 持续生效）
+   * =======================================================================
+   * 参考老项目的「替换 Emby 原生 logo」片段：Emby 的 logo 是一个文字标题
+   * （.pageTitle，显示服务器名/Emby）或图片（.headerLogo / a.logo）。不同版本、
+   * 不同页面 DOM 结构会变，且 SPA 导航会重建 header，所以：
+   *   1) 覆盖多套选择器（顶栏 + 登录页 docTitle）；
+   *   2) 幂等（已注入的槽位跳过，实时切换 Logo 时先移除旧的）；
+   *   3) MutationObserver + 定时兜底持续重扫，导航回来 Logo 不丢。
+   * ===================================================================== */
+  var LOGO_SLOTS = '.skinHeader .pageTitle, .skinHeader a.logo, .headerLogo, ' +
+                   '.skinHeader .headerLogo, a[data-role="logo"], .docTitle';
+
   function applyHeaderLogo() {
     if (LOGO.header === false || LOGO.header === 'false') return;
     var logoHtml = renderLogo();
-    var slots = $all('.skinHeader .pageTitle, .skinHeader a.logo, .headerLogo, ' +
-                     '.skinHeader .headerLeft a, a[data-role="logo"]');
-    each(slots, function (slot) {
-      // 先移除旧的，保证切换 Logo 时能实时替换
+    each($all(LOGO_SLOTS), function (slot) {
+      // 实时切换：先移除旧的注入
       var old = slot.querySelector('.aurora-hlogo');
       if (old) old.parentNode.removeChild(old);
       var span = doc.createElement('span');
@@ -284,16 +292,44 @@
       span.style.cssText = 'display:inline-flex;align-items:center;height:100%;';
       span.innerHTML = logoHtml;
       if (!LOGO.keepText) {
-        var txt = slot.querySelector('.pageTitle');
+        // 隐藏原生文字标题，让品牌 Logo 独占（不误伤返回按钮/图标）
+        var txt = slot.querySelector('.pageTitle, .docTitle, .headerTitle');
         if (txt) txt.style.display = 'none';
       }
       slot.insertBefore(span, slot.firstChild);
     });
     injectCSS('aurora-hlogo-css',
-      '.skinHeader .aurora-hlogo{display:inline-flex!important;align-items:center;}' +
-      '.skinHeader .aurora-hlogo img,.skinHeader .aurora-hlogo svg{height:32px;width:auto;max-width:160px;' +
+      '.aurora-hlogo{display:inline-flex!important;align-items:center;}' +
+      '.aurora-hlogo img,.aurora-hlogo svg{height:32px;width:auto;max-width:160px;' +
       'filter:drop-shadow(0 1px 3px rgba(0,0,0,.35));}'
     );
+  }
+
+  // 是否存在「尚未注入 logo」的候选槽位（用于幂等重扫）
+  function hasUnloggedSlot() {
+    var slots = $all(LOGO_SLOTS);
+    for (var i = 0; i < slots.length; i++) {
+      if (!slots[i].querySelector('.aurora-hlogo')) return true;
+    }
+    return false;
+  }
+
+  var logoWatcherStarted = false;
+  function startLogoWatcher() {
+    if (logoWatcherStarted) return;
+    logoWatcherStarted = true;
+    applyHeaderLogo();
+    // SPA 导航会重建 header，MutationObserver 在出现「无 logo 的新槽位」时立即补上
+    if (global.MutationObserver) {
+      var mo = new MutationObserver(function () {
+        if (hasUnloggedSlot()) applyHeaderLogo();
+      });
+      mo.observe(doc.body || doc.documentElement, { childList: true, subtree: true });
+    }
+    // 兜底：每 2s 轻量重扫一次（querySelectorAll 极廉价）
+    setInterval(function () {
+      if (hasUnloggedSlot()) applyHeaderLogo();
+    }, 2000);
   }
 
   // 替换浏览器标签页 favicon（Emby 自带 logo → 品牌 logo）
@@ -353,7 +389,7 @@
 
     waitForEmby(function () {
       global.AURORA._ready = true;
-      applyHeaderLogo();
+      startLogoWatcher();
       loadEnabledModules();
       if (loadingEl) {
         loadingEl.classList.add('is-hide');

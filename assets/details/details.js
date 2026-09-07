@@ -15,8 +15,7 @@
 (function (global) {
   'use strict';
   var doc = global.document;
-  var mountedId = null;   // 已注入的 itemId，防止重复注入
-  var tried = {};         // 记录已尝试的 itemId，避免死循环
+  var inFlight = null;   // 正在抓取的 itemId，避免并发重复注入
 
   function api() { return global.AURORA ? global.AURORA.api() : global.ApiClient; }
 
@@ -32,10 +31,12 @@
   }
 
   function getItemId() {
-    // 与 external-player 同源的多路兜底：hash → 完整 URL → DOM data-id
+    // 与 external-player 同源的多路兜底：hash → 完整 URL → 详情页容器内的 data-id
     var m = location.hash.match(/[?&]id=([^&#]+)/i) || location.href.match(/[?&]id=([^&#]+)/i);
     if (m) return decodeURIComponent(m[1]);
-    var el = doc.querySelector('.itemDetailPage [data-id], [data-id][data-type], [data-id]');
+    // 仅在「详情页容器」内取 data-id，避免首页卡片 [data-id] 被误判成详情条目
+    var page = doc.querySelector('.itemDetailPage, .detailPageWrapperContainer, .detailPagePrimaryContainer');
+    var el = page ? page.querySelector('[data-id]') : null;
     return el ? el.getAttribute('data-id') : null;
   }
 
@@ -173,25 +174,80 @@
     return '<div class="aurora-details__section"><h4>演职员</h4><div class="aurora-details__cast">' + cards + '</div></div>';
   }
 
-  /* ---- 相关推荐 ---- */
-  function similarRow(item, cb) {
+  /* ---- 相关推荐（JAV 精髓：同类 + 同演员，多路回退） ---- */
+  function buildCards(list) {
+    if (!list || !list.length) return '';
+    return list.slice(0, 12).map(function (it) {
+      var url = it.Id ? getImageUrl(it.Id, 'Primary') : '';
+      var art = url
+        ? '<img src="' + esc(url) + '" loading="lazy" alt="">'
+        : '<div class="aurora-rel__ph">' + esc((it.Name || '?').charAt(0)) + '</div>';
+      return '<div class="aurora-rel" data-id="' + esc(it.Id || '') + '">' + art +
+        '<div class="aurora-rel__name">' + esc(it.Name || '') + '</div></div>';
+    }).join('');
+  }
+
+  function relatedRows(item, append) {
     var client = api();
-    if (!client || !client.getSimilarItems || !client.getCurrentUserId) { cb(''); return; }
+    if (!client || !client.getCurrentUserId) return;
     var uid;
-    try { uid = client.getCurrentUserId(); } catch (e) { cb(''); return; }
-    try {
-      unwrap(client.getSimilarItems(item.Id, uid, { Limit: 10 }), function (res) {
-        var list = (res && res.Items) || [];
-        if (!list.length) { cb(''); return; }
-        var cards = list.map(function (it) {
-          var url = it.Id ? getImageUrl(it.Id, 'Primary') : '';
-          var art = url ? '<img src="' + esc(url) + '" loading="lazy" alt="">' : '<div class="aurora-rel__ph">' + esc((it.Name || '?').charAt(0)) + '</div>';
-          return '<div class="aurora-rel" data-id="' + esc(it.Id || '') + '">' + art +
-            '<div class="aurora-rel__name">' + esc(it.Name || '') + '</div></div>';
-        }).join('');
-        cb('<div class="aurora-details__section"><h4>相关推荐</h4><div class="aurora-details__related">' + cards + '</div></div>');
-      });
-    } catch (e) { cb(''); }
+    try { uid = client.getCurrentUserId(); } catch (e) { return; }
+
+    function addSection(label, list) {
+      var cards = buildCards(list);
+      if (cards) {
+        append('<div class="aurora-details__section"><h4>' + label + '</h4>' +
+          '<div class="aurora-details__related">' + cards + '</div></div>');
+      }
+    }
+    function withoutSelf(list) {
+      return (list || []).filter(function (it) { return it.Id !== item.Id; });
+    }
+
+    // ① 相关推荐：优先 getSimilarItems；amilys 社区版可能返回空 → 同题材兜底
+    function similarOrGenre(done) {
+      if (client.getSimilarItems) {
+        try {
+          unwrap(client.getSimilarItems(item.Id, uid, { Limit: 12 }), function (res) {
+            var list = withoutSelf((res && res.Items) || []);
+            if (list.length) { addSection('相关推荐', list); done(); return; }
+            byGenre(done);
+          });
+          return;
+        } catch (e) {}
+      }
+      byGenre(done);
+    }
+    function byGenre(done) {
+      var query = {
+        Recursive: true, IncludeItemTypes: item.Type || 'Movie', Limit: 12,
+        Fields: 'PrimaryImageAspectRatio', EnableUserData: false,
+        EnableTotalRecordCount: false, SortBy: 'Random'
+      };
+      if (item.Genres && item.Genres.length) query.Genres = item.Genres[0];
+      try {
+        unwrap(client.getItems(uid, query), function (res) {
+          addSection('同类推荐', withoutSelf((res && res.Items) || []));
+          done();
+        });
+      } catch (e) { done(); }
+    }
+    // ② 同演员推荐（JAV 详情页精髓：同女优/演员作品）
+    function byActor() {
+      var people = (item.People || []).filter(function (p) { return p.Id; });
+      if (!people.length) return;
+      try {
+        unwrap(client.getItems(uid, {
+          Recursive: true, PersonIds: people[0].Id, Limit: 12,
+          Fields: 'PrimaryImageAspectRatio', EnableUserData: false,
+          EnableTotalRecordCount: false
+        }), function (res) {
+          addSection('同演员推荐', withoutSelf((res && res.Items) || []));
+        });
+      } catch (e) {}
+    }
+
+    similarOrGenre(function () { byActor(); });
   }
 
   /* ---- 灯箱查看大图 ---- */
@@ -265,49 +321,63 @@
     return t.content.firstChild;
   }
 
-  /* ---- 组装并挂载 ---- */
+  /* ---- 组装并挂载 ----
+   * 排版（修复「按钮被挤出首屏、要下滑才看得到」）：
+   *   · 紧凑元信息条（评分 + 预告片）紧跟 .mainDetailButtons 之后，横向一行，不撑高；
+   *   · 大块增强（剧照 / 演职员 / 相关推荐 / 同演员）放到 .itemOverview 之后，
+   *     不打断 Emby 原生「标题 → 按钮 → 简介」的主视觉流。
+   */
   function mount(item) {
-    // 已注入则跳过（防止并发 fetch 重复插入）
-    if (doc.getElementById('aurora-details')) return false;
-    // 直接锚定主按钮组（external-player 已验证该选择器在 4.7/4.8/4.9 稳定存在），
-    // 不再依赖 .itemDetailPage 容器——否则某些版本找不到容器就整体不注入。
-    var anchor = doc.querySelector('.mainDetailButtons, .detailButtons, .detailButtonContainer, .itemOverview, .detailPagePrimaryContainer');
-    if (!anchor || !anchor.parentNode) return false;
+    var btnAnchor = doc.querySelector('.mainDetailButtons, .detailButtons, .detailButtonContainer');
+    if (!btnAnchor || !btnAnchor.parentNode) return false;
 
-    var host = doc.createElement('div');
-    host.className = 'aurora-details';
-    host.id = 'aurora-details';
-    host.innerHTML = ratingRow(item) + trailerRow(item) + castRow(item);
+    // ① 紧凑元信息条：评分 + 预告片（紧跟按钮组，不挤出首屏）
+    var metaHtml = ratingRow(item) + trailerRow(item);
+    var meta = doc.createElement('div');
+    meta.className = 'aurora-details aurora-details--meta';
+    meta.id = 'aurora-details-meta';
+    meta.innerHTML = metaHtml;
+    if (metaHtml) btnAnchor.parentNode.insertBefore(meta, btnAnchor.nextSibling);
 
-    // 插到主按钮组之后
-    anchor.parentNode.insertBefore(host, anchor.nextSibling);
+    // ② 大块增强：剧照 / 演职员 / 相关推荐 / 同演员（放到简介之后）
+    var extras = doc.createElement('div');
+    extras.className = 'aurora-details aurora-details--extras';
+    extras.id = 'aurora-details';
+    extras.setAttribute('data-id', item.Id);
+    extras.innerHTML = castRow(item);
+    var overview = doc.querySelector('.itemOverview, .itemMiscInfo');
+    if (overview && overview.parentNode) {
+      overview.parentNode.insertBefore(extras, overview.nextSibling);
+    } else {
+      btnAnchor.parentNode.appendChild(extras);
+    }
 
-    // 剧照（异步补齐，插到演职员 section 之前；含拖动 + 灯箱）
-    var firstSection = host.querySelector('.aurora-details__section');
+    // 剧照（异步补齐，插到第一个 section 之前；含拖动 + 灯箱）
+    var firstSection = extras.querySelector('.aurora-details__section');
     stillsRow(item, function (html) {
-      if (!html || !host.parentNode) return;
+      if (!html || !extras.parentNode) return;
       var n = toNode(html);
-      if (firstSection && firstSection.parentNode) host.insertBefore(n, firstSection);
-      else host.appendChild(n);
+      if (firstSection && firstSection.parentNode) extras.insertBefore(n, firstSection);
+      else extras.appendChild(n);
       var strip = n.querySelector('.aurora-details__stills');
       if (strip) {
         makeDraggable(strip);
         var imgs = Array.prototype.slice.call(strip.querySelectorAll('.aurora-still img')).map(function (im) { return im.getAttribute('src'); });
         strip.addEventListener('click', function (e) {
-          var still = e.target.closest ? e.target.closest('.aurora-still') : null;
+          var still = e.target && e.target.closest ? e.target.closest('.aurora-still') : null;
           if (!still) return;
           openLightbox(imgs, Number(still.getAttribute('data-index')) || 0);
         });
       }
     });
 
-    // 相关推荐异步补齐（追加到最后）
-    similarRow(item, function (html) {
-      if (html && host.parentNode) host.appendChild(toNode(html));
+    // 相关推荐 + 同演员（异步补齐，追加到最后）
+    relatedRows(item, function (html) {
+      if (html && extras.parentNode) extras.appendChild(toNode(html));
     });
 
-    // 点击相关推荐跳转
-    host.addEventListener('click', function (e) {
+    // 点击推荐卡片跳转（委托到 extras，含同类/同演员）
+    extras.addEventListener('click', function (e) {
       var rel = e.target && e.target.closest ? e.target.closest('.aurora-rel') : null;
       if (!rel) return;
       var id = rel.getAttribute('data-id');
@@ -318,33 +388,38 @@
       });
     });
 
-    mountedId = item.Id;
     return true;
   }
 
   function tryInject() {
     if (!global.AURORA) return;
     var id = getItemId();
-    if (!id) { mountedId = null; return; }
-    if (mountedId === id || tried[id]) return;
+    if (!id) return; // 非详情页：什么都不做（Emby 导航会自行移除旧 DOM）
+    // 已正确注入则跳过（基于 DOM 存在性判断，不依赖易泄漏的内存状态）
+    var existing = doc.getElementById('aurora-details');
+    if (existing && existing.getAttribute('data-id') === id) return;
+    if (inFlight === id) return; // 正在抓取该条目，避免并发重复
+    inFlight = id;
     fetchItem(function (item) {
-      if (item && item.Id && mountedId !== id) {
-        if (mount(item)) { tried[id] = true; mountedId = id; }
-      }
+      inFlight = null;
+      if (!item || !item.Id) return;
+      if (getItemId() !== id) return; // 抓取期间用户已切走
+      // 移除旧注入（元信息条 + 大块增强），再注入新的，避免跨条目残留
+      var old = doc.getElementById('aurora-details');
+      if (old && old.parentNode) old.parentNode.removeChild(old);
+      var oldMeta = doc.getElementById('aurora-details-meta');
+      if (oldMeta && oldMeta.parentNode) oldMeta.parentNode.removeChild(oldMeta);
+      mount(item);
     });
   }
 
   function start() {
     tryInject();
     if (global.MutationObserver) {
-      var mo = new MutationObserver(function () {
-        if (mountedId !== getItemId()) tryInject();
-      });
+      var mo = new MutationObserver(function () { tryInject(); });
       mo.observe(doc.body || doc.documentElement, { childList: true, subtree: true });
     }
-    setInterval(function () {
-      if (mountedId !== getItemId()) tryInject();
-    }, 1500);
+    setInterval(tryInject, 1500);
   }
 
   if (global.AURORA && global.AURORA.onReady) {

@@ -88,10 +88,10 @@
 
 | 字段 | 默认 | 说明 |
 |---|---|---|
-| `details` | `true` | 详情页增强（多平台评分/剧照/演职员/相关推荐） |
-| `extplayer` | `false` | 外部播放器按钮（PotPlayer/VLC/mpv/IINA） |
+| `details` | `true` | 详情页增强（多平台评分/剧照/演职员/同类·同演员推荐） |
+| `extplayer` | `false` | 外部播放器按钮（点击弹出下拉菜单：PotPlayer/VLC/mpv/IINA/复制直链） |
 | `douban` | `false` | 豆瓣评分/短评 |
 | `danmaku` | `false` | 弹幕 |
 | `speed` | `true` | 播放倍速记忆 |
 | `fluent` | `false` | 旧 Fluent 布局（保留可选） |
-| `externalScheme` | `potplayer`/`vlc`/`iina`/`mpv`/`copy` | 外部播放器协议 |
+| `externalScheme` | `potplayer`/`vlc`/`iina`/`mpv`/`copy` | 外部播放器**默认**协议（点按钮后仍可在页面内实时切换） |

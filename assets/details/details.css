@@ -4,9 +4,16 @@
  * 含：评分徽章 / 剧照墙（拖动滑动+灯箱）/ 演职员 / 相关推荐 / 预告片。
  */
 .aurora-details {
-  margin-top: 26px;
   color: var(--aurora-text);
   font-family: var(--aurora-font-ui);
+}
+/* 紧凑元信息条（评分 + 预告片）：紧跟按钮组，不挤出首屏 */
+.aurora-details--meta {
+  margin-top: 18px;
+}
+/* 大块增强（剧照 / 演职员 / 推荐）：位于简介之后 */
+.aurora-details--extras {
+  margin-top: 6px;
 }
 
 /* ---- 评分徽章 ---- */
