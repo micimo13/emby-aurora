@@ -32,9 +32,11 @@
   }
 
   function getItemId() {
-    var m = location.hash.match(/[?&]id=([^&#]+)/i);
+    // 与 external-player 同源的多路兜底：hash → 完整 URL → DOM data-id
+    var m = location.hash.match(/[?&]id=([^&#]+)/i) || location.href.match(/[?&]id=([^&#]+)/i);
     if (m) return decodeURIComponent(m[1]);
-    return null;
+    var el = doc.querySelector('.itemDetailPage [data-id], [data-id][data-type], [data-id]');
+    return el ? el.getAttribute('data-id') : null;
   }
 
   function getImageUrl(itemId, type, index) {
@@ -58,18 +60,20 @@
   function fetchItem(cb) {
     var id = getItemId();
     var client = api();
-    if (!id || !client || !client.getItems || !client.getCurrentUserId) { cb(null); return; }
+    if (!id || !client || !client.getCurrentUserId) { cb(null); return; }
     var uid;
     try { uid = client.getCurrentUserId(); } catch (e) { cb(null); return; }
+    // 主路径：getItem（最可靠，与 external-player 同源）；失败再 getItems 带全字段补齐
     try {
-      unwrap(client.getItems(uid, {
-        Ids: id,
-        Recursive: true,
-        Fields: FIELDS,
-        EnableUserData: true,
-        EnableTotalRecordCount: false
-      }), function (res) {
-        cb((res && res.Items && res.Items[0]) || null);
+      unwrap(client.getItem(uid, id), function (item) {
+        if (item && item.Id) { cb(item); return; }
+        try {
+          unwrap(client.getItems(uid, {
+            Ids: id, Recursive: true, Fields: FIELDS, EnableUserData: true, EnableTotalRecordCount: false
+          }), function (res) {
+            cb((res && res.Items && res.Items[0]) || null);
+          });
+        } catch (e) { cb(null); }
       });
     } catch (e) { cb(null); }
   }
@@ -263,21 +267,20 @@
 
   /* ---- 组装并挂载 ---- */
   function mount(item) {
-    var container = doc.querySelector('.itemDetailPage, .detailPageWrapperContainer, .itemBackdrop');
-    if (!container) return false;
+    // 已注入则跳过（防止并发 fetch 重复插入）
+    if (doc.getElementById('aurora-details')) return false;
+    // 直接锚定主按钮组（external-player 已验证该选择器在 4.7/4.8/4.9 稳定存在），
+    // 不再依赖 .itemDetailPage 容器——否则某些版本找不到容器就整体不注入。
+    var anchor = doc.querySelector('.mainDetailButtons, .detailButtons, .detailButtonContainer, .itemOverview, .detailPagePrimaryContainer');
+    if (!anchor || !anchor.parentNode) return false;
 
     var host = doc.createElement('div');
     host.className = 'aurora-details';
     host.id = 'aurora-details';
     host.innerHTML = ratingRow(item) + trailerRow(item) + castRow(item);
 
-    // 插到主信息区之后（详情页主按钮组下方）
-    var anchor = doc.querySelector('.mainDetailButtons, .itemOverview, .detailPagePrimaryContainer');
-    if (anchor && anchor.parentNode) {
-      anchor.parentNode.insertBefore(host, anchor.nextSibling);
-    } else {
-      container.appendChild(host);
-    }
+    // 插到主按钮组之后
+    anchor.parentNode.insertBefore(host, anchor.nextSibling);
 
     // 剧照（异步补齐，插到演职员 section 之前；含拖动 + 灯箱）
     var firstSection = host.querySelector('.aurora-details__section');

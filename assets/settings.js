@@ -124,11 +124,15 @@
 
   /* ---- UI 样式 ---- */
   var CSS = [
-    '#aurora-settings-btn{position:fixed;right:18px;bottom:18px;z-index:2147483000;width:44px;height:44px;',
-    'border-radius:50%;border:none;cursor:pointer;background:var(--aurora-gradient,#c9a227);color:#fff;',
-    'font-size:20px;box-shadow:0 8px 26px -6px var(--aurora-accent,rgba(0,0,0,.5));',
-    'display:flex;align-items:center;justify-content:center;transition:transform .2s;}',
-    '#aurora-settings-btn:hover{transform:scale(1.08);}',
+    '#aurora-settings-btn{position:fixed;right:18px;bottom:18px;z-index:2147483000;',
+    'height:44px;padding:0 16px;display:flex;align-items:center;gap:8px;',
+    'border-radius:999px;border:1px solid var(--aurora-glass-border);',
+    'background:var(--aurora-glass-strong,rgba(12,12,16,.92));backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);',
+    'color:var(--aurora-text);font-family:var(--aurora-font-ui);font-size:13px;font-weight:600;cursor:pointer;',
+    'box-shadow:0 8px 24px -8px rgba(0,0,0,.5);transition:transform .2s,box-shadow .2s,border-color .2s;}',
+    '#aurora-settings-btn:hover{transform:translateY(-2px);border-color:var(--aurora-accent);',
+    'box-shadow:0 12px 28px -8px var(--aurora-accent);}',
+    '#aurora-settings-btn svg{flex:none;color:var(--aurora-accent);}',
     '#aurora-settings-mask{position:fixed;inset:0;z-index:2147482998;background:rgba(0,0,0,.5);',
     'opacity:0;pointer-events:none;transition:opacity .3s;}',
     '#aurora-settings-mask.show{opacity:1;pointer-events:auto;}',
@@ -195,7 +199,12 @@
   function buildUI() {
     var btn = doc.createElement('button');
     btn.id = 'aurora-settings-btn';
-    btn.innerHTML = '🎨';
+    btn.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">' +
+      '<line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/>' +
+      '<line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/>' +
+      '<line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/>' +
+      '<line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/>' +
+      '<line x1="17" y1="16" x2="23" y2="16"/></svg><span>主题</span>';
     btn.title = 'EmbyAurora 主题设置';
 
     var mask = doc.createElement('div');

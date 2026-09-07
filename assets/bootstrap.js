@@ -296,12 +296,47 @@
     );
   }
 
+  // 替换浏览器标签页 favicon（Emby 自带 logo → 品牌 logo）
+  function injectFavicon() {
+    try {
+      var icon = basePath + '/logo/favicon.svg';
+      // 移除 Emby 自带 favicon，避免浏览器沿用旧图标
+      each($all('link[rel="icon"], link[rel="shortcut icon"], link[rel="apple-touch-icon"]'), function (l) {
+        if (l.parentNode) l.parentNode.removeChild(l);
+      });
+      var link = doc.createElement('link');
+      link.rel = 'icon';
+      link.type = 'image/svg+xml';
+      link.href = icon;
+      (doc.head || doc.documentElement).appendChild(link);
+      var apple = doc.createElement('link');
+      apple.rel = 'apple-touch-icon';
+      apple.href = icon;
+      (doc.head || doc.documentElement).appendChild(apple);
+    } catch (e) {}
+  }
+
   /* =========================================================================
    * 8. 主流程
    * ======================================================================= */
+  // 读取浏览器本地保存的 Logo 预设（设置中心选过的话，加载页/顶栏一致生效）
+  function applyStoredLogo() {
+    try {
+      var raw = localStorage.getItem('aurora.settings');
+      if (!raw) return;
+      var s = JSON.parse(raw);
+      if (s && s.logo && LOGO_PRESETS[s.logo]) {
+        LOGO.preset = s.logo;
+        LOGO.type = 'preset';
+      }
+    } catch (e) {}
+  }
+
   function main() {
     if (!isEmby()) return;
 
+    injectFavicon();
+    applyStoredLogo();
     injectCSS('aurora-loading-css', loadingCSS + cinemaCSS + minimalCSS);
 
     // 挂载加载页（同步，保证首帧；</head> 前 body 为 null，回退 documentElement）
