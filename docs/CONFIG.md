@@ -12,7 +12,7 @@
   "basePath": "aurora",
   "loading": {
     "enabled": true,
-    "style": "cinema",
+    "style": "aurora",
     "slogan": "EMBY · AURORA"
   },
   "theme": {
@@ -53,8 +53,8 @@
 
 | 字段 | 取值 | 说明 |
 |---|---|---|
-| `enabled` | `true`/`false` | 是否启用加载页 |
-| `style` | `cinema` / `minimal` | 影院黑金 / 极简 |
+| `enabled` | `true`/`false` | 是否启用加载页（全屏接管，替换 Emby 默认黑屏 logo 启动页） |
+| `style` | `aurora` / `cinema` / `minimal` / `snow` / `space` / `poster` | 极光（默认）/ 影院黑金 / 极简 / 雪白 / 深空 / 画报 |
 | `slogan` | 文本 | 加载页标语 |
 
 ### theme（默认主题）

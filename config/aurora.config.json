@@ -3,13 +3,8 @@
 
   "loading": {
     "enabled": true,
-    "style": "cinema",
-    "slogan": "EMBY · AURORA",
-    "aurora": {
-      "blob1": "#c9a227",
-      "blob2": "#e8c96a",
-      "blob3": "#8a6d1a"
-    }
+    "style": "aurora",
+    "slogan": "EMBY · AURORA"
   },
 
   "theme": {

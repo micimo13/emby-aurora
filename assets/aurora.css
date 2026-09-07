@@ -33,19 +33,18 @@
 /* =========================================================================
  * 全局基调
  * ======================================================================= */
+/* 全局基调：只设 background-color（不设 background 简写），避免用 !important
+   把 Emby 挂在 body 上的 backdrop 背景图（background-image）一并重置掉 */
 html, body {
-  background: var(--aurora-bg) !important;
+  background-color: var(--aurora-bg) !important;
 }
 body {
   font-family: var(--aurora-font-ui);
   color: var(--aurora-text);
 }
-/* 背景容器（Emby 首页 / 详情页的深色背景层） */
-.backgroundContainer,
-.backdropContainer,
-.pageBackground {
-  background: var(--aurora-bg) !important;
-}
+/* 注意：不要覆盖 .backgroundContainer / .backdropContainer / .pageBackground /
+   .itemBackdrop 等 Emby 背景图层。它们承载「显示背景图」功能（backdrop 大图），
+   一旦用 --aurora-bg 纯色覆盖，Emby 的背景大图就会被盖住显示不出来。 */
 
 /* 滚动条 */
 ::-webkit-scrollbar { width: 9px; height: 9px; }
@@ -257,9 +256,7 @@ a { color: var(--aurora-accent); }
 /* =========================================================================
  * 详情页
  * ======================================================================= */
-.itemDetailPage {
-  background: var(--aurora-bg) !important;
-}
+/* 详情页主内容卡片用半透明毛玻璃，让背后的 backdrop 背景图透出来 */
 .detailPagePrimaryContainer {
   background: var(--aurora-glass) !important;
   backdrop-filter: blur(20px);

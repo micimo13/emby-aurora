@@ -1,56 +1,67 @@
 /*!
  * EmbyAurora — details/details.css（详情页增强样式）
  * 全部引用 --aurora-* 变量，跟随主题/设置中心实时变化。
- * 含：评分徽章 / 剧照墙（拖动滑动+灯箱）/ 演职员 / 相关推荐 / 预告片。
+ *
+ * 设计系统（本轮统一了「容器位置关系 + 尺寸」）：
+ *   · 紧凑元信息条（评分 + 预告片）紧跟 .mainDetailButtons 之后，横向一行；
+ *   · 大块增强（剧照 / 演职员 / 相关·同演员推荐）位于简介之后；
+ *   · 统一节奏：卡片圆角 var(--aurora-radius) · 卡片间距 14px · 边框 1px 玻璃边；
+ *   · 统一标题：14px/700 + 4px×16px 主色竖条；
+ *   · 统一 hover：上浮 translateY(-3px) + 主色描边/投影。
  */
 .aurora-details {
   color: var(--aurora-text);
   font-family: var(--aurora-font-ui);
 }
-/* 紧凑元信息条（评分 + 预告片）：紧跟按钮组，不挤出首屏 */
+
+/* ===== 紧凑元信息条（评分 + 预告片）：紧跟按钮组，不挤出首屏 ===== */
 .aurora-details--meta {
-  margin-top: 18px;
+  margin-top: 16px;
 }
-/* 大块增强（剧照 / 演职员 / 推荐）：位于简介之后 */
-.aurora-details--extras {
-  margin-top: 6px;
+.aurora-details__ratings {
+  display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
 }
 
-/* ---- 评分徽章 ---- */
-.aurora-details__ratings {
-  display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
-  margin-bottom: 6px;
-}
+/* ---- 评分徽章（统一高度/字号，主评分徽章做大做突出） ---- */
 .aurora-rate {
   display: inline-flex; align-items: center; gap: 6px;
-  padding: 7px 14px; border-radius: var(--aurora-radius, 8px);
+  height: 34px; padding: 0 13px;
+  border-radius: var(--aurora-radius, 6px);
   border: 1px solid var(--aurora-glass-border);
   background: var(--aurora-glass);
   font-size: 13px; font-weight: 600; color: var(--aurora-text);
-  text-decoration: none;
-  transition: border-color .2s, transform .2s;
+  text-decoration: none; line-height: 1;
+  transition: border-color .2s, transform .2s, background .2s;
 }
-.aurora-rate:hover { transform: translateY(-1px); }
+.aurora-rate:hover { transform: translateY(-1px); border-color: var(--aurora-accent); }
 .aurora-rate i {
-  width: 8px; height: 8px; border-radius: 50%; background: currentColor; display: inline-block;
+  width: 7px; height: 7px; border-radius: 50%; background: currentColor; display: inline-block;
 }
 .aurora-rate--main {
+  height: 38px; padding: 0 15px;
   background: linear-gradient(135deg, var(--aurora-accent), var(--aurora-accent));
   color: #fff; border: none;
   box-shadow: 0 8px 22px -8px var(--aurora-accent);
 }
-.aurora-rate--main b { font-size: 20px; font-weight: 800; color: #fff; }
+.aurora-rate--main b { font-size: 20px; font-weight: 800; color: #fff; line-height: 1; }
 .aurora-rate--main small { font-size: 11px; color: rgba(255,255,255,.8); font-weight: 400; }
 .aurora-rate--official { font-weight: 700; letter-spacing: .05em; }
+.aurora-rate--link { color: var(--aurora-text); }
 .aurora-rate--link:hover { border-color: currentColor; }
-.aurora-rate--play { background: var(--aurora-accent-soft); }
+.aurora-rate--play { background: var(--aurora-accent-soft); border-color: transparent; }
 .aurora-rate--play svg { flex: none; }
 
-/* ---- section 标题 ---- */
+/* ===== 大块增强（剧照 / 演职员 / 推荐）：位于简介之后 ===== */
+.aurora-details--extras {
+  margin-top: 4px;
+}
+
+/* ---- 统一 section 结构 ---- */
 .aurora-details__section { margin-top: 28px; }
 .aurora-details__section h4 {
-  font-family: var(--aurora-font, Georgia, serif);
-  font-size: 18px; font-weight: 700; margin: 0 0 14px;
+  font-family: var(--aurora-font-ui);
+  font-size: 14px; font-weight: 700; letter-spacing: .02em;
+  margin: 0 0 14px; color: var(--aurora-text);
   display: flex; align-items: center; gap: 10px;
 }
 .aurora-details__section h4::before {
@@ -58,24 +69,35 @@
   background: var(--aurora-gradient);
 }
 
-/* ---- 剧照墙（可拖动滑动） ---- */
+/* ---- 横向滚动条统一 ---- */
+.aurora-details__stills,
+.aurora-details__cast,
+.aurora-details__related { scrollbar-width: thin; }
+.aurora-details__stills::-webkit-scrollbar,
+.aurora-details__cast::-webkit-scrollbar,
+.aurora-details__related::-webkit-scrollbar { height: 6px; }
+.aurora-details__stills::-webkit-scrollbar-thumb,
+.aurora-details__cast::-webkit-scrollbar-thumb,
+.aurora-details__related::-webkit-scrollbar-thumb { background: var(--aurora-accent-soft); border-radius: 99px; }
+.aurora-details__stills::-webkit-scrollbar-thumb:hover,
+.aurora-details__cast::-webkit-scrollbar-thumb:hover,
+.aurora-details__related::-webkit-scrollbar-thumb:hover { background: var(--aurora-accent); }
+
+/* ---- 剧照墙（16:9，可拖动滑动） ---- */
 .aurora-details__stills {
-  display: grid; grid-auto-flow: column; grid-auto-columns: 240px; gap: 12px;
-  overflow-x: auto; padding-bottom: 8px; cursor: grab;
+  display: grid; grid-auto-flow: column; grid-auto-columns: 248px; gap: 14px;
+  overflow-x: auto; padding-bottom: 10px; cursor: grab;
   scroll-snap-type: x proximity;
 }
 .aurora-details__stills.is-drag { cursor: grabbing; }
-.aurora-details__stills::-webkit-scrollbar { height: 6px; }
-.aurora-details__stills::-webkit-scrollbar-thumb { background: var(--aurora-accent-soft); }
-.aurora-details__stills::-webkit-scrollbar-thumb:hover { background: var(--aurora-accent); }
 .aurora-still {
   position: relative;
   aspect-ratio: 16/9; border-radius: var(--aurora-radius, 6px); overflow: hidden;
   border: 1px solid var(--aurora-glass-border); cursor: pointer;
   scroll-snap-align: start;
-  transition: transform .25s, box-shadow .25s;
+  transition: transform .25s, box-shadow .25s, border-color .25s;
 }
-.aurora-still:hover { transform: scale(1.03); box-shadow: 0 12px 32px -12px rgba(0,0,0,.6); }
+.aurora-still:hover { transform: scale(1.03); border-color: var(--aurora-accent); box-shadow: 0 12px 32px -12px rgba(0,0,0,.6); }
 .aurora-still img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .aurora-still__zoom {
   position: absolute; right: 8px; top: 8px; width: 30px; height: 30px;
@@ -110,14 +132,14 @@
 .aurora-lb__count { position: absolute; z-index: 3; bottom: 18px; left: 50%; transform: translateX(-50%);
   color: #fff; font-size: 13px; background: rgba(0,0,0,.55); padding: 4px 14px; border-radius: 999px; }
 
-/* ---- 演职员 ---- */
+/* ---- 演职员（圆形头像） ---- */
 .aurora-details__cast {
-  display: grid; grid-auto-flow: column; grid-auto-columns: 104px; gap: 14px;
-  overflow-x: auto; padding-bottom: 8px;
+  display: grid; grid-auto-flow: column; grid-auto-columns: 96px; gap: 14px;
+  overflow-x: auto; padding-bottom: 10px;
 }
 .aurora-cast { text-align: center; }
 .aurora-cast__ava {
-  width: 72px; height: 72px; border-radius: 50%; overflow: hidden;
+  width: 68px; height: 68px; border-radius: 50%; overflow: hidden;
   margin: 0 auto 8px; background: var(--aurora-accent-soft);
   display: flex; align-items: center; justify-content: center;
   border: 2px solid var(--aurora-glass-border);
@@ -125,28 +147,29 @@
 }
 .aurora-cast:hover .aurora-cast__ava { border-color: var(--aurora-accent); transform: scale(1.05); }
 .aurora-cast__ava img { width: 100%; height: 100%; object-fit: cover; }
-.aurora-cast__ava--ph { font-size: 26px; font-weight: 700; color: var(--aurora-accent); }
+.aurora-cast__ava--ph { font-size: 24px; font-weight: 700; color: var(--aurora-accent); }
 .aurora-cast__name { font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .aurora-cast__role { font-size: 11px; color: var(--aurora-text-dim); margin-top: 2px; }
 
-/* ---- 相关推荐 ---- */
+/* ---- 相关 / 同演员推荐（2:3 海报） ---- */
 .aurora-details__related {
-  display: grid; grid-auto-flow: column; grid-auto-columns: 130px; gap: 12px;
-  overflow-x: auto; padding-bottom: 8px;
+  display: grid; grid-auto-flow: column; grid-auto-columns: 128px; gap: 14px;
+  overflow-x: auto; padding-bottom: 10px;
 }
 .aurora-rel { cursor: pointer; }
 .aurora-rel img, .aurora-rel__ph {
   width: 100%; aspect-ratio: 2/3; object-fit: cover; border-radius: var(--aurora-radius, 6px);
   display: block; border: 1px solid var(--aurora-glass-border);
-  transition: box-shadow .2s, transform .2s;
+  transition: box-shadow .2s, transform .2s, border-color .2s;
 }
 .aurora-rel__ph {
   display: flex; align-items: center; justify-content: center;
-  font-size: 30px; font-weight: 700; color: var(--aurora-accent);
+  font-size: 28px; font-weight: 700; color: var(--aurora-accent);
   background: var(--aurora-accent-soft);
 }
 .aurora-rel:hover img, .aurora-rel:hover .aurora-rel__ph {
-  box-shadow: 0 0 0 2px var(--aurora-accent), 0 14px 34px -14px rgba(0,0,0,.6);
+  border-color: var(--aurora-accent);
+  box-shadow: 0 0 0 1px var(--aurora-accent), 0 14px 34px -14px rgba(0,0,0,.6);
   transform: translateY(-3px);
 }
 .aurora-rel__name { font-size: 12px; margin-top: 7px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -154,6 +177,6 @@
 /* ---- 响应式 ---- */
 @media (max-width: 720px) {
   .aurora-details__stills { grid-auto-columns: 70vw; }
-  .aurora-details__cast { grid-auto-columns: 88px; }
-  .aurora-details__related { grid-auto-columns: 96px; }
+  .aurora-details__cast { grid-auto-columns: 84px; }
+  .aurora-details__related { grid-auto-columns: 104px; }
 }

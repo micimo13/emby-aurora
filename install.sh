@@ -130,8 +130,27 @@ choose_features() {
   echo ""
   c_info "══════════ 选择要安装的功能（回车 = 默认）══════════"
 
-  c_ask "① 预热加载页（进入首页的全屏品牌动画）？[Y/n]: "; read_input ans "y"
-  { [ "$ans" = "n" ] || [ "$ans" = "N" ]; } && set_block_bool loading enabled false "$CONFIG_FILE"
+  c_ask "① 预热加载页（接管 Emby 默认启动页的全屏品牌动画）？[Y/n]: "; read_input ans "y"
+  if [ "$ans" = "n" ] || [ "$ans" = "N" ]; then
+    set_block_bool loading enabled false "$CONFIG_FILE"
+  else
+    echo "   加载页样式："
+    echo "   1) aurora   极光（深蓝紫气泡漂移，默认）"
+    echo "   2) cinema   影院黑金（金色光束 + 胶片）"
+    echo "   3) minimal  极简（纯黑细线）"
+    echo "   4) snow     雪白（浅色 + 蓝色主色）"
+    echo "   5) space    深空（星点闪烁 + 蓝紫渐变）"
+    echo "   6) poster   画报（暖纸白 + 网格纸纹）"
+    c_ask "选择 [1-6, 默认 1]: "; read_input lstyle "1"
+    case "$lstyle" in
+      2) set_block_str loading style "cinema" "$CONFIG_FILE" ;;
+      3) set_block_str loading style "minimal" "$CONFIG_FILE" ;;
+      4) set_block_str loading style "snow" "$CONFIG_FILE" ;;
+      5) set_block_str loading style "space" "$CONFIG_FILE" ;;
+      6) set_block_str loading style "poster" "$CONFIG_FILE" ;;
+      *) set_block_str loading style "aurora" "$CONFIG_FILE" ;;
+    esac
+  fi
 
   c_ask "② 首页轮播大屏？[Y/n]: "; read_input ans "y"
   if [ "$ans" = "n" ] || [ "$ans" = "N" ]; then
