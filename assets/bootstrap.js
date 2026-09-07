@@ -97,7 +97,7 @@
     '.aurora-loading.is-hide{opacity:0;pointer-events:none;}',
     '.aurora-loading__bg{position:absolute;inset:0;}',
     '.aurora-loading__inner{position:relative;display:flex;flex-direction:column;' +
-      'align-items:center;gap:26px;padding:0 24px;}',
+      'align-items:center;gap:28px;padding:0 24px;z-index:3;}',
     '.aurora-loading__logo{width:120px;height:120px;display:flex;align-items:center;justify-content:center;}',
     '.aurora-loading__logo img,.aurora-loading__logo svg{width:100%;height:100%;object-fit:contain;}',
     '.aurora-loading__slogan{font-size:15px;letter-spacing:.42em;text-indent:.42em;' +
@@ -107,9 +107,13 @@
       'animation:aurora-slide 1.6s ease-in-out infinite;}',
     '@keyframes aurora-slide{0%{left:-45%}100%{left:105%}}',
     '@keyframes aurora-fadein{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}',
+    '@keyframes aurora-breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}',
+    '@keyframes aurora-spin{to{transform:rotate(360deg)}}',
     // 装饰层默认隐藏，由各套样式按需开启
-    '.aurora-loading__blob,.aurora-loading__beam,.aurora-loading__film,' +
-      '.aurora-loading__stars,.aurora-loading__grid,.aurora-loading__ring{display:none;}'
+    '.aurora-loading__aurora,.aurora-loading__aurora-band,.aurora-loading__countdown,' +
+      '.aurora-loading__grain,.aurora-loading__filmstrip,.aurora-loading__scanline,' +
+      '.aurora-loading__spot,.aurora-loading__dust,.aurora-loading__warp,' +
+      '.aurora-loading__stars,.aurora-loading__ink{display:none;}'
   ].join('\n');
 
   // 隐藏 Emby 自带启动画面（多版本选择器兜底），真正「替换」黑屏 logo 页
@@ -119,58 +123,69 @@
   ].join('\n');
 
   var loadingThemeCSS = {
-    // 极光（默认）：深蓝紫 + 三色气泡漂移
+    // 极光（默认）：夜空 + 流动极光光幕（真正的极光带，非气泡）
     aurora: [
-      '.aurora-loading.is-aurora .aurora-loading__bg{background:radial-gradient(120% 120% at 50% 0%,#10102a 0%,#0a0a18 55%,#050510 100%);}',
-      '.aurora-loading.is-aurora .aurora-loading__blob{position:absolute;border-radius:50%;filter:blur(90px);opacity:.55;will-change:transform;}',
-      '.aurora-loading.is-aurora .aurora-loading__blob--1{width:52vmax;height:52vmax;left:-14vmax;top:-18vmax;background:#6d5dfc;animation:aurora-drift1 11s ease-in-out infinite;}',
-      '.aurora-loading.is-aurora .aurora-loading__blob--2{width:44vmax;height:44vmax;right:-12vmax;top:6vmax;background:#22d3ee;animation:aurora-drift2 14s ease-in-out infinite;}',
-      '.aurora-loading.is-aurora .aurora-loading__blob--3{width:40vmax;height:40vmax;left:20%;bottom:-20vmax;background:#f472b6;animation:aurora-drift3 17s ease-in-out infinite;}',
-      '.aurora-loading.is-aurora .aurora-loading__logo{animation:aurora-breathe 2.6s ease-in-out infinite;filter:drop-shadow(0 0 26px rgba(139,124,255,.55));}',
-      '.aurora-loading.is-aurora .aurora-loading__slogan{animation:aurora-fadein 1.2s ease .3s both;}',
-      '.aurora-loading.is-aurora .aurora-loading__bar i{background:linear-gradient(90deg,#6d5dfc,#22d3ee,#f472b6);}',
-      '@keyframes aurora-drift1{0%,100%{transform:translate(0,0) scale(1) rotate(0)}50%{transform:translate(6vmax,4vmax) scale(1.12) rotate(25deg)}}',
-      '@keyframes aurora-drift2{0%,100%{transform:translate(0,0) scale(1) rotate(0)}50%{transform:translate(-5vmax,-3vmax) scale(1.1) rotate(-20deg)}}',
-      '@keyframes aurora-drift3{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(4vmax,-5vmax) scale(1.15)}}',
-      '@keyframes aurora-breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}'
+      '.aurora-loading.is-aurora .aurora-loading__bg{background:linear-gradient(180deg,#0b0d1f 0%,#070814 45%,#04050c 100%);}',
+      '.aurora-loading.is-aurora .aurora-loading__aurora{position:absolute;inset:0;display:block;overflow:hidden;}',
+      '.aurora-loading.is-aurora .aurora-loading__aurora-band{position:absolute;left:-20%;right:-20%;height:52%;' +
+        'border-radius:50%;filter:blur(46px);opacity:.62;mix-blend-mode:screen;}',
+      '.aurora-loading.is-aurora .aurora-loading__aurora-band--1{top:-8%;background:linear-gradient(90deg,transparent,#22d3ee,transparent);animation:aurora-sway1 9s ease-in-out infinite;}',
+      '.aurora-loading.is-aurora .aurora-loading__aurora-band--2{top:16%;background:linear-gradient(90deg,transparent,#6d5dfc,transparent);animation:aurora-sway2 11s ease-in-out infinite;}',
+      '.aurora-loading.is-aurora .aurora-loading__aurora-band--3{top:40%;background:linear-gradient(90deg,transparent,#f472b6,transparent);animation:aurora-sway3 13s ease-in-out infinite;}',
+      '.aurora-loading.is-aurora .aurora-loading__logo{animation:aurora-breathe 2.6s ease-in-out infinite;filter:drop-shadow(0 0 28px rgba(139,124,255,.6));}',
+      '.aurora-loading.is-aurora .aurora-loading__slogan{color:#d7d6f5;animation:aurora-fadein 1.2s ease .3s both;}',
+      '.aurora-loading.is-aurora .aurora-loading__bar i{background:linear-gradient(90deg,#22d3ee,#6d5dfc,#f472b6);}',
+      '@keyframes aurora-sway1{0%,100%{transform:translateX(-4%) rotate(-3deg) skewX(8deg)}50%{transform:translateX(4%) rotate(3deg) skewX(-8deg)}}',
+      '@keyframes aurora-sway2{0%,100%{transform:translateX(5%) rotate(3deg) skewX(-6deg)}50%{transform:translateX(-5%) rotate(-3deg) skewX(6deg)}}',
+      '@keyframes aurora-sway3{0%,100%{transform:translateX(-3%) rotate(-2deg)}50%{transform:translateX(3%) rotate(2deg)}}'
     ].join('\n'),
-    // 影院黑金：金色光束 + 底部胶片
+    // 影院倒计时：环形进度 + 暗角颗粒 + 底部胶片齿孔滚动
     cinema: [
-      '.aurora-loading.is-cinema .aurora-loading__bg{background:radial-gradient(90% 70% at 50% -10%,#1a1408 0%,#000 60%);}',
-      '.aurora-loading.is-cinema .aurora-loading__beam{position:absolute;top:-30%;left:50%;width:140%;height:60%;' +
-        'transform:translateX(-50%);background:linear-gradient(180deg,rgba(212,175,55,.22),transparent 70%);' +
-        'clip-path:polygon(46% 0,54% 0,78% 100%,22% 100%);filter:blur(2px);animation:cinema-sway 5s ease-in-out infinite;}',
-      '.aurora-loading.is-cinema .aurora-loading__film{position:absolute;bottom:14%;left:0;right:0;height:8px;' +
-        'display:flex;gap:8px;justify-content:center;opacity:.5;}',
-      '.aurora-loading.is-cinema .aurora-loading__film i{width:22px;height:8px;border-radius:2px;background:#d4af37;animation:cinema-film 1.4s linear infinite;}',
-      '.aurora-loading.is-cinema .aurora-loading__logo{filter:drop-shadow(0 0 20px rgba(212,175,55,.5));animation:aurora-breathe 2.6s ease-in-out infinite;}',
+      '.aurora-loading.is-cinema .aurora-loading__bg{background:radial-gradient(80% 60% at 50% 45%,#181204 0%,#000 65%);}',
+      '.aurora-loading.is-cinema .aurora-loading__countdown{position:absolute;display:block;width:230px;height:230px;animation:aurora-spin 2.4s linear infinite;}',
+      '.aurora-loading.is-cinema .aurora-loading__countdown .track{fill:none;stroke:rgba(212,175,55,.18);stroke-width:3;}',
+      '.aurora-loading.is-cinema .aurora-loading__countdown .ring{fill:none;stroke:#d4af37;stroke-width:3;stroke-linecap:round;stroke-dasharray:283;animation:aurora-countdown 2.4s ease-in-out infinite;}',
+      '.aurora-loading.is-cinema .aurora-loading__grain{position:absolute;inset:0;display:block;opacity:.5;pointer-events:none;' +
+        'background:radial-gradient(120% 120% at 50% 50%,transparent 55%,rgba(0,0,0,.75) 100%);animation:cinema-flicker 2.2s steps(2) infinite;}',
+      '.aurora-loading.is-cinema .aurora-loading__filmstrip{position:absolute;bottom:12%;left:0;right:0;height:14px;display:flex;gap:10px;justify-content:center;overflow:hidden;opacity:.6;}',
+      '.aurora-loading.is-cinema .aurora-loading__filmstrip i{flex:none;width:24px;height:14px;border-radius:3px;background:#d4af37;animation:cinema-film 1.2s linear infinite;}',
+      '.aurora-loading.is-cinema .aurora-loading__logo{filter:drop-shadow(0 0 22px rgba(212,175,55,.5));animation:aurora-breathe 2.6s ease-in-out infinite;}',
       '.aurora-loading.is-cinema .aurora-loading__slogan{color:#f0e3b6;}',
       '.aurora-loading.is-cinema .aurora-loading__bar i{background:linear-gradient(90deg,#d4af37,#fff7d6,#d4af37);}',
-      '@keyframes cinema-sway{0%,100%{transform:translateX(-52%) rotate(0)}50%{transform:translateX(-48%) rotate(1.5deg)}}',
-      '@keyframes cinema-film{0%{opacity:.2}50%{opacity:1}100%{opacity:.2}}'
+      '@keyframes aurora-countdown{0%{stroke-dashoffset:283}100%{stroke-dashoffset:0}}',
+      '@keyframes cinema-film{0%{opacity:.2;transform:translateX(0)}50%{opacity:1}100%{opacity:.2;transform:translateX(-22px)}}',
+      '@keyframes cinema-flicker{0%,100%{opacity:.42}50%{opacity:.58}}'
     ].join('\n'),
-    // 极简：纯黑 + 静态小 logo + 白细线
-    minimal: [
-      '.aurora-loading.is-minimal .aurora-loading__bg{background:#0b0d12;}',
-      '.aurora-loading.is-minimal .aurora-loading__logo{filter:none;width:96px;height:96px;}',
-      '.aurora-loading.is-minimal .aurora-loading__slogan{color:#9aa0ae;letter-spacing:.5em;}',
-      '.aurora-loading.is-minimal .aurora-loading__bar{height:2px;}',
-      '.aurora-loading.is-minimal .aurora-loading__bar i{background:#e8eaf6;}'
+    // 霓虹：灯管发光 + 通电闪烁 + 扫描线（赛博感）
+    neon: [
+      '.aurora-loading.is-neon .aurora-loading__bg{background:radial-gradient(100% 100% at 50% 0%,#1a0a24 0%,#0a0512 60%,#050208 100%);}',
+      '.aurora-loading.is-neon .aurora-loading__scanline{position:absolute;left:0;right:0;height:130px;display:block;' +
+        'background:linear-gradient(180deg,transparent,rgba(255,0,200,.08),transparent);animation:neon-scan 3s linear infinite;}',
+      '.aurora-loading.is-neon .aurora-loading__logo{animation:neon-flicker 3.2s linear infinite;' +
+        'filter:drop-shadow(0 0 12px #ff00c8) drop-shadow(0 0 30px #ff00c8) drop-shadow(0 0 58px #a200ff);}',
+      '.aurora-loading.is-neon .aurora-loading__slogan{color:#ffb6f0;text-shadow:0 0 12px #ff00c8;}',
+      '.aurora-loading.is-neon .aurora-loading__bar{background:rgba(255,0,200,.15);}',
+      '.aurora-loading.is-neon .aurora-loading__bar i{background:linear-gradient(90deg,#ff00c8,#a200ff);box-shadow:0 0 16px #ff00c8;}',
+      '@keyframes neon-scan{0%{top:-20%}100%{top:120%}}',
+      '@keyframes neon-flicker{0%,90%,94%,100%{opacity:1}91%,93%{opacity:.45}92%{opacity:.8}}'
     ].join('\n'),
-    // 雪白：浅色 + 蓝色主色 + 柔和圆环
-    snow: [
-      '.aurora-loading.is-snow .aurora-loading__bg{background:linear-gradient(180deg,#ffffff 0%,#eef1f6 60%,#e6eaf1 100%);}',
-      '.aurora-loading.is-snow .aurora-loading__ring{position:absolute;display:block;width:300px;height:300px;' +
-        'border-radius:50%;border:1px solid rgba(0,102,204,.16);animation:ring-pulse 2.8s ease-in-out infinite;}',
-      '.aurora-loading.is-snow .aurora-loading__logo{animation:aurora-breathe 2.6s ease-in-out infinite;filter:drop-shadow(0 6px 16px rgba(0,102,204,.25));}',
-      '.aurora-loading.is-snow .aurora-loading__slogan{color:#3a4a5a;}',
-      '.aurora-loading.is-snow .aurora-loading__bar{background:rgba(0,102,204,.12);}',
-      '.aurora-loading.is-snow .aurora-loading__bar i{background:linear-gradient(90deg,#0066cc,#4da3ff);}',
-      '@keyframes ring-pulse{0%,100%{transform:scale(1);opacity:.5}50%{transform:scale(1.06);opacity:1}}'
+    // 舞台聚光：锥形光束 + 漂浮光尘 + 暗角
+    spotlight: [
+      '.aurora-loading.is-spotlight .aurora-loading__bg{background:radial-gradient(60% 50% at 50% 40%,#141210 0%,#000 72%);}',
+      '.aurora-loading.is-spotlight .aurora-loading__spot{position:absolute;top:-10%;left:50%;width:62%;height:78%;' +
+        'transform:translateX(-50%);display:block;background:linear-gradient(180deg,rgba(255,240,200,.30),transparent 82%);' +
+        'clip-path:polygon(42% 0,58% 0,100% 100%,0 100%);filter:blur(2px);animation:spotlight-sway 6s ease-in-out infinite;}',
+      '.aurora-loading.is-spotlight .aurora-loading__dust{position:absolute;inset:0;display:block;overflow:hidden;}',
+      '.aurora-loading.is-spotlight .aurora-loading__dust i{position:absolute;bottom:-6%;border-radius:50%;background:#fff;opacity:0;animation:dust-rise 5s linear infinite;}',
+      '.aurora-loading.is-spotlight .aurora-loading__logo{animation:aurora-breathe 2.8s ease-in-out infinite;filter:drop-shadow(0 8px 22px rgba(255,240,200,.35));}',
+      '.aurora-loading.is-spotlight .aurora-loading__slogan{color:#e9e2cf;}',
+      '.aurora-loading.is-spotlight .aurora-loading__bar i{background:linear-gradient(90deg,#f5e6c4,#fff7e0);}',
+      '@keyframes spotlight-sway{0%,100%{transform:translateX(-50%) rotate(0)}50%{transform:translateX(-48%) rotate(2deg)}}',
+      '@keyframes dust-rise{0%{transform:translateY(0);opacity:0}10%{opacity:.8}100%{transform:translateY(-115vh);opacity:0}}'
     ].join('\n'),
-    // 深空：深蓝黑 + 星点闪烁 + 蓝紫渐变
+    // 深空跃迁：径向光速线 warp + 星点闪烁
     space: [
-      '.aurora-loading.is-space .aurora-loading__bg{background:radial-gradient(120% 100% at 50% 0%,#0d1830 0%,#070d1c 55%,#04060e 100%);}',
+      '.aurora-loading.is-space .aurora-loading__bg{background:radial-gradient(120% 100% at 50% 40%,#0d1830 0%,#070d1c 55%,#04060e 100%);}',
       '.aurora-loading.is-space .aurora-loading__stars{position:absolute;inset:0;display:block;' +
         'background-image:radial-gradient(1.6px 1.6px at 18% 24%,#fff,transparent),' +
         'radial-gradient(1.2px 1.2px at 42% 14%,#cfe0ff,transparent),' +
@@ -183,21 +198,28 @@
         'radial-gradient(1.3px 1.3px at 90% 74%,#fff,transparent),' +
         'radial-gradient(1.2px 1.2px at 48% 82%,#8aa4ff,transparent);' +
         'animation:space-twinkle 3.2s ease-in-out infinite;}',
-      '.aurora-loading.is-space .aurora-loading__logo{animation:aurora-breathe 3s ease-in-out infinite;filter:drop-shadow(0 0 22px rgba(122,162,255,.6));}',
+      '.aurora-loading.is-space .aurora-loading__warp{position:absolute;inset:-50%;display:block;' +
+        'background:repeating-conic-gradient(from 0deg,rgba(122,162,255,.14) 0deg 2deg,transparent 2deg 12deg);' +
+        'animation:aurora-spin 14s linear infinite;' +
+        '-webkit-mask-image:radial-gradient(circle,transparent 20%,#000 58%);mask-image:radial-gradient(circle,transparent 20%,#000 58%);}',
+      '.aurora-loading.is-space .aurora-loading__logo{animation:aurora-breathe 3s ease-in-out infinite;filter:drop-shadow(0 0 24px rgba(122,162,255,.6));}',
       '.aurora-loading.is-space .aurora-loading__slogan{color:#c6d4ff;}',
       '.aurora-loading.is-space .aurora-loading__bar i{background:linear-gradient(90deg,#7aa2ff,#a78bfa);}',
       '@keyframes space-twinkle{0%,100%{opacity:.55}50%{opacity:1}}'
     ].join('\n'),
-    // 画报：暖纸白 + 网格纸纹 + 砖红进度
-    poster: [
-      '.aurora-loading.is-poster .aurora-loading__bg{background:linear-gradient(180deg,#f7f3ea 0%,#f1ebdd 100%);}',
-      '.aurora-loading.is-poster .aurora-loading__grid{position:absolute;inset:0;display:block;opacity:.5;' +
-        'background-image:linear-gradient(rgba(20,18,16,.05) 1px,transparent 1px),' +
-        'linear-gradient(90deg,rgba(20,18,16,.05) 1px,transparent 1px);background-size:36px 36px;}',
-      '.aurora-loading.is-poster .aurora-loading__logo{animation:aurora-breathe 2.4s ease-in-out infinite;filter:drop-shadow(0 4px 10px rgba(20,18,16,.2));}',
-      '.aurora-loading.is-poster .aurora-loading__slogan{color:#4a4238;letter-spacing:.5em;font-weight:600;}',
-      '.aurora-loading.is-poster .aurora-loading__bar{background:rgba(216,72,42,.14);}',
-      '.aurora-loading.is-poster .aurora-loading__bar i{background:#d8482a;}'
+    // 水墨：宣纸 + 墨点晕染 + 楷体标语 + 毛笔笔触进度
+    ink: [
+      '.aurora-loading.is-ink .aurora-loading__bg{background:linear-gradient(180deg,#f5f0e6 0%,#ede6d8 100%);}',
+      '.aurora-loading.is-ink .aurora-loading__ink{position:absolute;inset:0;display:block;overflow:hidden;}',
+      '.aurora-loading.is-ink .aurora-loading__ink i{position:absolute;border-radius:50%;' +
+        'background:radial-gradient(circle,rgba(30,28,24,.20),rgba(30,28,24,0) 70%);filter:blur(5px);animation:ink-spread 7s ease-out infinite;}',
+      '.aurora-loading.is-ink .aurora-loading__logo{animation:aurora-breathe 2.4s ease-in-out infinite;filter:drop-shadow(0 4px 10px rgba(30,28,24,.25));}',
+      '.aurora-loading.is-ink .aurora-loading__slogan{color:#4a4238;letter-spacing:.6em;font-weight:600;' +
+        'font-family:"STKaiti","KaiTi","Songti SC",serif;}',
+      '.aurora-loading.is-ink .aurora-loading__bar{height:6px;background:transparent;}',
+      '.aurora-loading.is-ink .aurora-loading__bar i{height:6px;border-radius:2px;background:linear-gradient(90deg,#2b2722,#5a534a);animation:ink-brush 2.2s ease-in-out infinite;}',
+      '@keyframes ink-spread{0%{transform:scale(.4);opacity:0}30%{opacity:1}100%{transform:scale(2.8);opacity:0}}',
+      '@keyframes ink-brush{0%{left:-45%;width:30%}50%{width:48%}100%{left:105%;width:30%}}'
     ].join('\n')
   };
 
@@ -238,6 +260,35 @@
     return '<img src="' + basePath + '/logo/logo.svg" alt="logo">';
   }
 
+  // 加载页图标三选：aurora（AI 设计）/ emby（原生）/ image（自定义）/ auto（跟随顶栏 logo）
+  function renderLoadingLogo() {
+    var t = LOADING.logo || 'auto';
+    if (t === 'aurora') return '<img src="' + basePath + '/logo/loader-aurora.svg" alt="logo">';
+    if (t === 'emby') return '<img src="' + basePath + '/logo/loader-emby.svg" alt="logo">';
+    if (t === 'image') {
+      var src = LOADING.logoUrl;
+      if (src) return '<img src="' + esc(src) + '" alt="logo">';
+    }
+    return renderLogo(); // auto / 兜底
+  }
+
+  // 生成 N 个带随机位置/时长/延迟的光尘（聚光）或墨点（水墨）
+  // vert=true 时同时随机 top（墨点需全屏散落；光尘用 CSS 的 bottom:-6% 自下而上飘）
+  function genParticles(n, cls, minSize, maxSize, minDur, maxDur, vert) {
+    var s = '';
+    for (var i = 0; i < n; i++) {
+      var left = (Math.random() * 100).toFixed(1);
+      var top = (Math.random() * 100).toFixed(1);
+      var size = (minSize + Math.random() * (maxSize - minSize)).toFixed(1);
+      var dur = (minDur + Math.random() * (maxDur - minDur)).toFixed(1);
+      var delay = (Math.random() * 6).toFixed(1);
+      s += '<i style="left:' + left + '%;' + (vert ? 'top:' + top + '%;' : '') +
+        'width:' + size + 'px;height:' + size + 'px;' +
+        'animation-duration:' + dur + 's;animation-delay:' + delay + 's;"></i>';
+    }
+    return s;
+  }
+
   function buildLoading() {
     var el = doc.createElement('div');
     var style = loadingThemeCSS[LOADING.style] ? LOADING.style : 'aurora';
@@ -246,20 +297,28 @@
     // 每套样式的专属装饰层（默认 display:none，由对应 CSS 开启）
     var decor = '';
     if (style === 'aurora') {
-      decor = '<div class="aurora-loading__blob aurora-loading__blob--1"></div>' +
-        '<div class="aurora-loading__blob aurora-loading__blob--2"></div>' +
-        '<div class="aurora-loading__blob aurora-loading__blob--3"></div>';
+      decor = '<div class="aurora-loading__aurora">' +
+        '<i class="aurora-loading__aurora-band aurora-loading__aurora-band--1"></i>' +
+        '<i class="aurora-loading__aurora-band aurora-loading__aurora-band--2"></i>' +
+        '<i class="aurora-loading__aurora-band aurora-loading__aurora-band--3"></i></div>';
     } else if (style === 'cinema') {
-      decor = '<div class="aurora-loading__beam"></div><div class="aurora-loading__film">' + repeat(9, '<i></i>') + '</div>';
+      decor = '<svg class="aurora-loading__countdown" viewBox="0 0 100 100">' +
+        '<circle class="track" cx="50" cy="50" r="45"/>' +
+        '<circle class="ring" cx="50" cy="50" r="45"/></svg>' +
+        '<div class="aurora-loading__grain"></div>' +
+        '<div class="aurora-loading__filmstrip">' + repeat(10, '<i></i>') + '</div>';
+    } else if (style === 'neon') {
+      decor = '<div class="aurora-loading__scanline"></div>';
+    } else if (style === 'spotlight') {
+      decor = '<div class="aurora-loading__spot"></div>' +
+        '<div class="aurora-loading__dust">' + genParticles(12, 'dust', 2, 6, 4, 8) + '</div>';
     } else if (style === 'space') {
-      decor = '<div class="aurora-loading__stars"></div>';
-    } else if (style === 'poster') {
-      decor = '<div class="aurora-loading__grid"></div>';
-    } else if (style === 'snow') {
-      decor = '<div class="aurora-loading__ring"></div>';
+      decor = '<div class="aurora-loading__warp"></div><div class="aurora-loading__stars"></div>';
+    } else if (style === 'ink') {
+      decor = '<div class="aurora-loading__ink">' + genParticles(8, 'ink', 40, 110, 5, 8) + '</div>';
     }
 
-    var logoHtml = renderLogo();
+    var logoHtml = renderLoadingLogo();
     el.innerHTML =
       '<div class="aurora-loading__bg"></div>' +
       decor +
@@ -434,8 +493,8 @@
     applyStoredLogo();
     injectCSS('aurora-loading-css',
       loadingBaseCSS + hideEmbySplashCSS +
-      loadingThemeCSS.aurora + loadingThemeCSS.cinema + loadingThemeCSS.minimal +
-      loadingThemeCSS.snow + loadingThemeCSS.space + loadingThemeCSS.poster);
+      loadingThemeCSS.aurora + loadingThemeCSS.cinema + loadingThemeCSS.neon +
+      loadingThemeCSS.spotlight + loadingThemeCSS.space + loadingThemeCSS.ink);
 
     // 挂载加载页（同步，保证首帧；</head> 前 body 为 null，回退 documentElement）
     var loadingEl = null;

@@ -54,8 +54,10 @@
 | 字段 | 取值 | 说明 |
 |---|---|---|
 | `enabled` | `true`/`false` | 是否启用加载页（全屏接管，替换 Emby 默认黑屏 logo 启动页） |
-| `style` | `aurora` / `cinema` / `minimal` / `snow` / `space` / `poster` | 极光（默认）/ 影院黑金 / 极简 / 雪白 / 深空 / 画报 |
+| `style` | `aurora` / `cinema` / `neon` / `spotlight` / `space` / `ink` | 极光光幕（默认）/ 影院倒计时 / 霓虹灯管 / 舞台聚光 / 深空跃迁 / 水墨晕染。每套都有独立构图与动效，非配色差异 |
 | `slogan` | 文本 | 加载页标语 |
+| `logo` | `aurora` / `emby` / `image` / `auto` | 加载页图标：AI 设计的极光图标 / Emby 原生图标 / 自定义图片 / 跟随顶栏 Logo |
+| `logoUrl` | 图片 URL | `logo=image` 时的自定义图片地址 |
 
 ### theme（默认主题）
 

@@ -130,25 +130,43 @@ choose_features() {
   echo ""
   c_info "══════════ 选择要安装的功能（回车 = 默认）══════════"
 
-  c_ask "① 预热加载页（接管 Emby 默认启动页的全屏品牌动画）？[Y/n]: "; read_input ans "y"
+  c_ask "① 预热加载页（接管 Emby 默认启动页）？[Y/n]: "; read_input ans "y"
   if [ "$ans" = "n" ] || [ "$ans" = "N" ]; then
     set_block_bool loading enabled false "$CONFIG_FILE"
   else
-    echo "   加载页样式："
-    echo "   1) aurora   极光（深蓝紫气泡漂移，默认）"
-    echo "   2) cinema   影院黑金（金色光束 + 胶片）"
-    echo "   3) minimal  极简（纯黑细线）"
-    echo "   4) snow     雪白（浅色 + 蓝色主色）"
-    echo "   5) space    深空（星点闪烁 + 蓝紫渐变）"
-    echo "   6) poster   画报（暖纸白 + 网格纸纹）"
+    echo "   加载页样式（6 套动效各不同）："
+    echo "   1) aurora    极光光幕（流动极光带，默认）"
+    echo "   2) cinema    影院倒计时（环形进度 + 胶片齿孔）"
+    echo "   3) neon      霓虹灯管（发光闪烁 + 扫描线）"
+    echo "   4) spotlight 舞台聚光（锥形光束 + 光尘）"
+    echo "   5) space     深空跃迁（光速线 + 星点）"
+    echo "   6) ink       水墨晕染（宣纸 + 墨点）"
     c_ask "选择 [1-6, 默认 1]: "; read_input lstyle "1"
     case "$lstyle" in
       2) set_block_str loading style "cinema" "$CONFIG_FILE" ;;
-      3) set_block_str loading style "minimal" "$CONFIG_FILE" ;;
-      4) set_block_str loading style "snow" "$CONFIG_FILE" ;;
+      3) set_block_str loading style "neon" "$CONFIG_FILE" ;;
+      4) set_block_str loading style "spotlight" "$CONFIG_FILE" ;;
       5) set_block_str loading style "space" "$CONFIG_FILE" ;;
-      6) set_block_str loading style "poster" "$CONFIG_FILE" ;;
+      6) set_block_str loading style "ink" "$CONFIG_FILE" ;;
       *) set_block_str loading style "aurora" "$CONFIG_FILE" ;;
+    esac
+
+    echo ""
+    echo "   加载页图标："
+    echo "   1) aurora   AI 设计的极光图标（默认）"
+    echo "   2) emby     Emby 原生图标"
+    echo "   3) image    自定义图片 URL"
+    echo "   4) auto     跟随顶栏 Logo"
+    c_ask "选择 [1-4, 默认 1]: "; read_input llogo "1"
+    case "$llogo" in
+      2) set_block_str loading logo "emby" "$CONFIG_FILE" ;;
+      3)
+        set_block_str loading logo "image" "$CONFIG_FILE"
+        c_ask "   图片 URL（如 https://example.com/logo.png）: "; read_input lurl ""
+        if [ -n "$lurl" ]; then set_block_str loading logoUrl "$lurl" "$CONFIG_FILE"; fi
+        ;;
+      4) set_block_str loading logo "auto" "$CONFIG_FILE" ;;
+      *) set_block_str loading logo "aurora" "$CONFIG_FILE" ;;
     esac
   fi
 

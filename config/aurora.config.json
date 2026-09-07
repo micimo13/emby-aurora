@@ -4,7 +4,9 @@
   "loading": {
     "enabled": true,
     "style": "aurora",
-    "slogan": "EMBY · AURORA"
+    "slogan": "EMBY · AURORA",
+    "logo": "aurora",
+    "logoUrl": ""
   },
 
   "theme": {
