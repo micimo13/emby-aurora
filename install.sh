@@ -167,25 +167,33 @@ choose_features() {
   if [ "$ans" = "n" ] || [ "$ans" = "N" ]; then
     set_block_bool logo header false "$CONFIG_FILE"
   else
-    echo "   Logo 替换方式："
-    echo "   1) 图片（粘贴图片 URL）"
-    echo "   2) 文字（输入文字内容）"
-    echo "   3) 使用默认 Logo"
-    c_ask "选择 [1-3, 默认 3]: "; read_input ltype "3"
+    echo "   Logo 预设（扁平 Logo，部署后可在页面设置中心随时换）："
+    echo "   1) aurora   极光渐变（默认）"
+    echo "   2) emby     Emby 绿"
+    echo "   3) minimal  极简白字"
+    echo "   4) cinema   影院金字"
+    echo "   5) film     胶片场记板"
+    echo "   6) 自定义图片 URL"
+    echo "   7) 自定义文字"
+    c_ask "选择 [1-7, 默认 1]: "; read_input ltype "1"
     case "$ltype" in
-      1)
+      2) set_block_str logo type "preset" "$CONFIG_FILE"; set_block_str logo preset "emby" "$CONFIG_FILE" ;;
+      3) set_block_str logo type "preset" "$CONFIG_FILE"; set_block_str logo preset "minimal" "$CONFIG_FILE" ;;
+      4) set_block_str logo type "preset" "$CONFIG_FILE"; set_block_str logo preset "cinema" "$CONFIG_FILE" ;;
+      5) set_block_str logo type "preset" "$CONFIG_FILE"; set_block_str logo preset "film" "$CONFIG_FILE" ;;
+      6)
         set_block_str logo type "image" "$CONFIG_FILE"
         c_ask "   图片 URL（如 https://example.com/logo.png）: "; read_input lurl ""
         if [ -n "$lurl" ]; then set_block_str logo imageUrl "$lurl" "$CONFIG_FILE"; fi
         ;;
-      2)
+      7)
         set_block_str logo type "text" "$CONFIG_FILE"
         c_ask "   文字内容（如 MY NAS）: "; read_input ltext "AURORA"
         set_block_str logo text "$ltext" "$CONFIG_FILE"
         c_ask "   文字颜色（如 #d4af37，回车=白色）: "; read_input lcolor "#ffffff"
         set_block_str logo color "$lcolor" "$CONFIG_FILE"
         ;;
-      *) ;;  # 默认 Logo，不改
+      *) set_block_str logo type "preset" "$CONFIG_FILE"; set_block_str logo preset "aurora" "$CONFIG_FILE" ;;
     esac
   fi
 

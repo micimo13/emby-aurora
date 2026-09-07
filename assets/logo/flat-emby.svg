@@ -1,0 +1,5 @@
+<svg width="200" height="60" viewBox="0 0 200 60" xmlns="http://www.w3.org/2000/svg">
+  <rect x="6" y="10" width="40" height="40" rx="10" fill="#52B54B"/>
+  <path d="M21 20.5 L36 30 L21 39.5 Z" fill="#ffffff"/>
+  <text x="56" y="39" font-family="Segoe UI, Arial, sans-serif" font-size="24" font-weight="800" fill="#E8F5E9" letter-spacing="1">Emby</text>
+</svg>

@@ -18,7 +18,8 @@
   },
 
   "logo": {
-    "type": "image",
+    "type": "preset",
+    "preset": "aurora",
     "imageUrl": "",
     "text": "AURORA",
     "color": "#ffffff",

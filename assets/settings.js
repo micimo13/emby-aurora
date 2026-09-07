@@ -116,6 +116,9 @@
     if (s.customH !== undefined) {
       applyCustom(s.customH, s.customS, s.gradOn);
     }
+    if (s.logo && global.AURORA && global.AURORA.setLogo) {
+      global.AURORA.setLogo(s.logo);
+    }
     return true;
   }
 
@@ -148,6 +151,13 @@
     '#aurora-settings-panel .theme.on{border-color:#fff;box-shadow:0 0 0 2px var(--aurora-accent);}',
     '#aurora-settings-panel .theme span{position:absolute;left:8px;bottom:6px;font-size:11px;',
     'color:#fff;font-weight:700;text-shadow:0 1px 4px rgba(0,0,0,.6);}',
+    '#aurora-settings-panel .logos{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}',
+    '#aurora-settings-panel .logo{aspect-ratio:10/3;border-radius:8px;cursor:pointer;border:2px solid transparent;' +
+    'background:linear-gradient(135deg,#1a1a22,#0e0e14);display:flex;align-items:center;justify-content:center;' +
+    'overflow:hidden;padding:4px 6px;transition:transform .15s;}',
+    '#aurora-settings-panel .logo:hover{transform:scale(1.04);}',
+    '#aurora-settings-panel .logo.on{border-color:#fff;box-shadow:0 0 0 2px var(--aurora-accent);}',
+    '#aurora-settings-panel .logo img{width:100%;height:100%;object-fit:contain;display:block;}',
     '#aurora-settings-panel .row{display:flex;align-items:center;gap:10px;margin-bottom:12px;}',
     '#aurora-settings-panel .row label{flex:none;width:48px;font-size:12px;color:var(--aurora-text-dim);}',
     '#aurora-settings-panel input[type=range]{flex:1;height:6px;border-radius:99px;-webkit-appearance:none;outline:none;}',
@@ -206,6 +216,8 @@
       '<div class="sub">改完立即生效，自动保存在本浏览器</div>' +
       '<div class="sec">预设主题</div>' +
       '<div class="themes">' + themeBtns + '</div>' +
+      '<div class="sec">Logo 预设</div>' +
+      '<div class="logos" id="aurora-logos"></div>' +
       '<div class="sec">自定义颜色</div>' +
       '<div class="row"><label>色相</label><input type="range" class="hue" id="aurora-hue" min="0" max="360" value="45"></div>' +
       '<div class="row"><label>饱和度</label><input type="range" class="sat" id="aurora-sat" min="20" max="100" value="70"></div>' +
@@ -246,9 +258,40 @@
           hue.value = Math.round(hslv[0]); sat.value = Math.round(hslv[1] * 100);
         }
         syncHex();
-        save({ theme: k, gradOn: v.gradOn });
+        var s0 = load() || {};
+        s0.theme = k; s0.gradOn = v.gradOn;
+        save(s0);
       });
     });
+
+    // Logo 预设选择（实时切换 + 持久化）
+    var logoBox = panel.querySelector('#aurora-logos');
+    function buildLogos() {
+      if (!global.AURORA || !global.AURORA.logoPresets) return;
+      var presets = global.AURORA.logoPresets();
+      logoBox.innerHTML = presets.map(function (p) {
+        return '<div class="logo" data-logo="' + p.key + '" title="' + p.label + '">' +
+          '<img src="' + p.file + '" alt="' + p.label + '"></div>';
+      }).join('');
+      logoBox.querySelectorAll('.logo').forEach(function (el) {
+        el.addEventListener('click', function () {
+          var k = el.getAttribute('data-logo');
+          if (global.AURORA.setLogo) global.AURORA.setLogo(k);
+          logoBox.querySelectorAll('.logo').forEach(function (t) { t.classList.remove('on'); });
+          el.classList.add('on');
+          var s1 = load() || {};
+          s1.logo = k;
+          save(s1);
+        });
+      });
+      var cur = load();
+      if (cur && cur.logo) {
+        logoBox.querySelectorAll('.logo').forEach(function (t) {
+          t.classList.toggle('on', t.getAttribute('data-logo') === cur.logo);
+        });
+      }
+    }
+    buildLogos();
 
     function onPicker() {
       applyCustom(+hue.value, +sat.value, grad.checked);
@@ -267,6 +310,10 @@
       applyVars(THEMES.cinema, false);
       panel.querySelectorAll('.theme').forEach(function (t) {
         t.classList.toggle('on', t.getAttribute('data-theme') === 'cinema');
+      });
+      if (global.AURORA && global.AURORA.setLogo) global.AURORA.setLogo('aurora');
+      panel.querySelectorAll('.logo').forEach(function (t) {
+        t.classList.toggle('on', t.getAttribute('data-logo') === 'aurora');
       });
       grad.checked = false;
       hue.value = 45; sat.value = 70; syncHex();

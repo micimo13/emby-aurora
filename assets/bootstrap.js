@@ -158,6 +158,15 @@
   }
   function repeat(n, s) { var r = ''; for (var i = 0; i < n; i++) r += s; return r; }
 
+  // 扁平 Logo 预设库（参考旧项目的「平拍 Logo」思路，给用户自行挑选的乐趣）
+  var LOGO_PRESETS = {
+    aurora:  { file: 'logo.svg',       label: '极光',   color: '#8B7CFF' },
+    emby:    { file: 'flat-emby.svg',  label: 'Emby',   color: '#52B54B' },
+    minimal: { file: 'flat-minimal.svg', label: '极简', color: '#FFFFFF' },
+    cinema:  { file: 'flat-cinema.svg', label: '影院',  color: '#C9A227' },
+    film:    { file: 'flat-film.svg',  label: '胶片',   color: '#F4F4F5' }
+  };
+
   function renderLogo() {
     if (LOGO.type === 'image') {
       var src = LOGO.imageUrl || (basePath + '/logo/logo.svg');
@@ -170,6 +179,11 @@
         '<text x="100" y="42" text-anchor="middle" font-size="' + (LOGO.fontSize || 34) +
         '" fill="' + esc(c) + '" font-weight="700" font-family="Segoe UI,PingFang SC,Microsoft YaHei,sans-serif" ' +
         'letter-spacing="4">' + esc(t) + '</text></svg>';
+    }
+    // 预设扁平 Logo
+    var preset = LOGO_PRESETS[LOGO.preset];
+    if (preset) {
+      return '<img src="' + basePath + '/logo/' + preset.file + '" alt="logo">';
     }
     return '<img src="' + basePath + '/logo/logo.svg" alt="logo">';
   }
@@ -262,7 +276,9 @@
     var slots = $all('.skinHeader .pageTitle, .skinHeader a.logo, .headerLogo, ' +
                      '.skinHeader .headerLeft a, a[data-role="logo"]');
     each(slots, function (slot) {
-      if (slot.querySelector('.aurora-hlogo')) return;
+      // 先移除旧的，保证切换 Logo 时能实时替换
+      var old = slot.querySelector('.aurora-hlogo');
+      if (old) old.parentNode.removeChild(old);
       var span = doc.createElement('span');
       span.className = 'aurora-hlogo';
       span.style.cssText = 'display:inline-flex;align-items:center;height:100%;';
@@ -275,7 +291,8 @@
     });
     injectCSS('aurora-hlogo-css',
       '.skinHeader .aurora-hlogo{display:inline-flex!important;align-items:center;}' +
-      '.skinHeader .aurora-hlogo img,.skinHeader .aurora-hlogo svg{height:32px;width:auto;max-width:160px;}'
+      '.skinHeader .aurora-hlogo img,.skinHeader .aurora-hlogo svg{height:32px;width:auto;max-width:160px;' +
+      'filter:drop-shadow(0 1px 3px rgba(0,0,0,.35));}'
     );
   }
 
@@ -338,6 +355,22 @@
   // 是否在首页（Emby 首页 URL 含 "!/home"）
   global.AURORA.isHome = function () {
     return location.href.indexOf('!/home') !== -1 || location.hash.indexOf('home') !== -1;
+  };
+  // Logo 预设库（供设置中心渲染选择卡片）
+  global.AURORA.logoPresets = function () {
+    return Object.keys(LOGO_PRESETS).map(function (k) {
+      return { key: k, label: LOGO_PRESETS[k].label, color: LOGO_PRESETS[k].color, file: basePath + '/logo/' + LOGO_PRESETS[k].file };
+    });
+  };
+  // 切换 Logo 预设（设置中心实时调用）
+  global.AURORA.setLogo = function (preset) {
+    if (LOGO_PRESETS[preset]) {
+      LOGO.preset = preset;
+      LOGO.type = 'preset';
+      applyHeaderLogo();
+      return true;
+    }
+    return false;
   };
 
   main();

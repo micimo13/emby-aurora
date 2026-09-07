@@ -20,7 +20,8 @@
     "accent": "#c9a227"
   },
   "logo": {
-    "type": "image",
+    "type": "preset",
+    "preset": "aurora",
     "imageUrl": "",
     "text": "AURORA",
     "color": "#ffffff",
@@ -62,6 +63,17 @@
 |---|---|---|
 | `name` | `cinema` / `snow` / `space` / `poster` | 默认主题（部署后可在设置中心切换） |
 | `accent` | 颜色 | 主色覆盖（可选） |
+
+### logo（顶栏 Logo）
+
+| 字段 | 取值 | 说明 |
+|---|---|---|
+| `type` | `preset` / `image` / `text` | 预设扁平 Logo / 图片 URL / 文字 |
+| `preset` | `aurora` / `emby` / `minimal` / `cinema` / `film` | 扁平 Logo 预设（`type=preset` 时生效） |
+| `imageUrl` | URL | 自定义图片（`type=image` 时生效） |
+| `text` / `color` | 文本 / 颜色 | 文字 Logo（`type=text` 时生效） |
+
+> 部署后可在页面设置中心「Logo 预设」随时切换，实时生效。
 
 ### carousel（首页轮播）
 
