@@ -83,11 +83,13 @@
 .aurora-details__cast::-webkit-scrollbar-thumb:hover,
 .aurora-details__related::-webkit-scrollbar-thumb:hover { background: var(--aurora-accent); }
 
-/* ---- 剧照墙（16:9，可拖动滑动） ---- */
+/* ---- 剧照墙（16:9，可拖动滑动 + 左右箭头兜底） ---- */
+.aurora-details__stills-wrap { position: relative; }
 .aurora-details__stills {
   display: grid; grid-auto-flow: column; grid-auto-columns: 248px; gap: 14px;
   overflow-x: auto; padding-bottom: 10px; cursor: grab;
   scroll-snap-type: x proximity;
+  user-select: none; -webkit-user-select: none;
 }
 .aurora-details__stills.is-drag { cursor: grabbing; }
 .aurora-still {
@@ -98,7 +100,9 @@
   transition: transform .25s, box-shadow .25s, border-color .25s;
 }
 .aurora-still:hover { transform: scale(1.03); border-color: var(--aurora-accent); box-shadow: 0 12px 32px -12px rgba(0,0,0,.6); }
-.aurora-still img { width: 100%; height: 100%; object-fit: cover; display: block; }
+/* 关键修复：禁用原生图片拖拽/选中，否则鼠标按在剧照上拖不动（浏览器会劫持成图片拖拽），
+   点击仍可穿透到 .aurora-still 触发灯箱 */
+.aurora-still img { width: 100%; height: 100%; object-fit: cover; display: block; pointer-events: none; -webkit-user-drag: none; }
 .aurora-still__zoom {
   position: absolute; right: 8px; top: 8px; width: 30px; height: 30px;
   border-radius: 8px; background: rgba(0,0,0,.55); color: #fff;
@@ -106,6 +110,21 @@
   opacity: 0; transition: opacity .2s;
 }
 .aurora-still:hover .aurora-still__zoom { opacity: 1; }
+
+/* ---- 剧照左右箭头（悬停显示，滚动兜底） ---- */
+.aurora-still-nav {
+  position: absolute; top: 50%; transform: translateY(-50%);
+  width: 36px; height: 36px; border-radius: 50%;
+  border: 1px solid var(--aurora-glass-border);
+  background: rgba(0,0,0,.5); color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px; line-height: 1; cursor: pointer;
+  z-index: 2; opacity: 0; transition: opacity .2s, background .2s;
+}
+.aurora-details__stills-wrap:hover .aurora-still-nav { opacity: 1; }
+.aurora-still-nav:hover { background: var(--aurora-accent); }
+.aurora-still-nav--prev { left: 6px; }
+.aurora-still-nav--next { right: 6px; }
 
 /* ---- 灯箱 ---- */
 .aurora-lb {
@@ -146,7 +165,7 @@
   transition: border-color .2s, transform .2s;
 }
 .aurora-cast:hover .aurora-cast__ava { border-color: var(--aurora-accent); transform: scale(1.05); }
-.aurora-cast__ava img { width: 100%; height: 100%; object-fit: cover; }
+.aurora-cast__ava img { width: 100%; height: 100%; object-fit: cover; pointer-events: none; -webkit-user-drag: none; }
 .aurora-cast__ava--ph { font-size: 24px; font-weight: 700; color: var(--aurora-accent); }
 .aurora-cast__name { font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .aurora-cast__role { font-size: 11px; color: var(--aurora-text-dim); margin-top: 2px; }
@@ -161,6 +180,7 @@
   width: 100%; aspect-ratio: 2/3; object-fit: cover; border-radius: var(--aurora-radius, 6px);
   display: block; border: 1px solid var(--aurora-glass-border);
   transition: box-shadow .2s, transform .2s, border-color .2s;
+  pointer-events: none; -webkit-user-drag: none;
 }
 .aurora-rel__ph {
   display: flex; align-items: center; justify-content: center;

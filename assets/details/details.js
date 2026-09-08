@@ -130,13 +130,19 @@
       '<svg viewBox="0 0 24 24" width="14" height="14"><path fill="currentColor" d="M8 5v14l11-7z"/></svg>预告片</a>';
   }
 
-  /* ---- 剧照墙（多张 Backdrop，三级回退 + 灯箱） ---- */
+  /* ---- 剧照墙（多张 Backdrop，三级回退 + 灯箱 + 左右箭头兜底） ---- */
   function buildStills(urls) {
     var imgs = urls.map(function (u, i) {
-      return '<div class="aurora-still" data-index="' + i + '"><img src="' + esc(u) + '" loading="lazy" alt="">' +
+      return '<div class="aurora-still" data-index="' + i + '"><img src="' + esc(u) + '" loading="lazy" alt="" draggable="false">' +
         '<div class="aurora-still__zoom"><svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 1 0-.7.7l.27.28v.79l5 4.99L20.49 19zm-6 0A4.5 4.5 0 1 1 14 9.5 4.5 4.5 0 0 1 9.5 14z"/></svg></div></div>';
     }).join('');
-    return imgs ? '<div class="aurora-details__section"><h4>剧照</h4><div class="aurora-details__stills">' + imgs + '</div></div>' : '';
+    if (!imgs) return '';
+    return '<div class="aurora-details__section aurora-details__section--stills"><h4>剧照</h4>' +
+      '<div class="aurora-details__stills-wrap">' +
+        '<button class="aurora-still-nav aurora-still-nav--prev" type="button" aria-label="上一张">‹</button>' +
+        '<div class="aurora-details__stills">' + imgs + '</div>' +
+        '<button class="aurora-still-nav aurora-still-nav--next" type="button" aria-label="下一张">›</button>' +
+      '</div></div>';
   }
 
   function stillsRow(item, cb) {
@@ -293,21 +299,36 @@
     doc.addEventListener('keydown', onKey);
   }
 
-  /* ---- 拖动滑动（桌面鼠标拖拽；触屏原生滚动） ---- */
+  /* ---- 拖动滑动（Pointer Events：鼠标/触屏/触控笔统一，setPointerCapture 拖出元素也能继续） ---- */
   function makeDraggable(el) {
-    var down = false, startX = 0, startScroll = 0, moved = false;
-    el.addEventListener('mousedown', function (e) {
-      down = true; moved = false; startX = e.pageX; startScroll = el.scrollLeft;
+    var down = false, startX = 0, startScroll = 0, moved = false, pid = null;
+
+    function onDown(e) {
+      if (e.pointerType === 'mouse' && e.button !== 0) return; // 仅左键
+      down = true; moved = false; startX = e.clientX; startScroll = el.scrollLeft; pid = e.pointerId;
       el.classList.add('is-drag');
-    });
-    el.addEventListener('mouseleave', function () { down = false; el.classList.remove('is-drag'); });
-    el.addEventListener('mouseup', function () { down = false; el.classList.remove('is-drag'); });
-    el.addEventListener('mousemove', function (e) {
+      if (el.setPointerCapture) { try { el.setPointerCapture(pid); } catch (err) {} }
+    }
+    function onMove(e) {
       if (!down) return;
-      var dx = e.pageX - startX;
+      var dx = e.clientX - startX;
       if (Math.abs(dx) > 4) moved = true;
-      if (moved) { e.preventDefault(); el.scrollLeft = startScroll - dx; }
-    });
+      if (moved) {
+        if (e.cancelable) e.preventDefault();
+        el.scrollLeft = startScroll - dx;
+      }
+    }
+    function onEnd() {
+      down = false; el.classList.remove('is-drag');
+      if (pid != null && el.releasePointerCapture) { try { el.releasePointerCapture(pid); } catch (err) {} }
+      pid = null;
+    }
+
+    el.addEventListener('pointerdown', onDown);
+    el.addEventListener('pointermove', onMove);
+    el.addEventListener('pointerup', onEnd);
+    el.addEventListener('pointercancel', onEnd);
+
     // 拖动后抑制 click，避免误触灯箱
     el.addEventListener('click', function (e) {
       if (moved) { e.preventDefault(); e.stopPropagation(); moved = false; }
@@ -362,6 +383,20 @@
       var strip = n.querySelector('.aurora-details__stills');
       if (strip) {
         makeDraggable(strip);
+        // 左右箭头按钮（悬停显示，兜底：即使拖拽失效也能滚动查看后面的剧照）
+        var prev = n.querySelector('.aurora-still-nav--prev');
+        var next = n.querySelector('.aurora-still-nav--next');
+        var stepWidth = function () {
+          var card = strip.querySelector('.aurora-still');
+          return (card ? card.getBoundingClientRect().width : 248) + 14; // 卡片宽 + 间距
+        };
+        function scrollBy(dir) {
+          try { strip.scrollBy({ left: dir * stepWidth(), behavior: 'smooth' }); }
+          catch (e) { strip.scrollLeft += dir * stepWidth(); }
+        }
+        if (prev) prev.addEventListener('click', function (e) { e.stopPropagation(); scrollBy(-1); });
+        if (next) next.addEventListener('click', function (e) { e.stopPropagation(); scrollBy(1); });
+
         var imgs = Array.prototype.slice.call(strip.querySelectorAll('.aurora-still img')).map(function (im) { return im.getAttribute('src'); });
         strip.addEventListener('click', function (e) {
           var still = e.target && e.target.closest ? e.target.closest('.aurora-still') : null;

@@ -33,10 +33,6 @@
     catch (e) { return DEFAULT_SCHEME; }
   }
   function saveScheme(k) { try { localStorage.setItem('aurora.extScheme', k); } catch (e) {} }
-  function labelOf(k) {
-    for (var i = 0; i < SCHEMES.length; i++) if (SCHEMES[i].key === k) return SCHEMES[i].label;
-    return SCHEMES[0].label;
-  }
 
   function getItemId() {
     var m = location.hash.match(/[?&]id=([^&#]+)/i) || location.href.match(/[?&]id=([^&#]+)/i);
@@ -126,7 +122,7 @@
 
     var cur = storedScheme();
     btn.innerHTML =
-      '<span class="aurora-ext-label">' + labelOf(cur) + '</span>' +
+      '<span class="aurora-ext-label">外部播放</span>' +
       '<span class="aurora-ext-caret">▾</span>';
 
     var menu = document.createElement('div');
@@ -162,8 +158,6 @@
       saveScheme(k);
       runScheme(k, buildStreamUrl(itemId));
       closeMenu();
-      var lb = btn.querySelector('.aurora-ext-label');
-      if (lb) lb.textContent = labelOf(k);
       Array.prototype.forEach.call(menu.querySelectorAll('.aurora-ext-item'), function (x) {
         x.classList.toggle('is-on', x.getAttribute('data-scheme') === k);
       });
