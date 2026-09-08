@@ -33,18 +33,89 @@
 /* =========================================================================
  * 全局基调
  * ======================================================================= */
-/* 全局基调：只设 background-color（不设 background 简写），避免用 !important
-   把 Emby 挂在 body 上的 backdrop 背景图（background-image）一并重置掉 */
-html, body {
+/* 背景图层关系（关键，勿改）：
+ *   Emby 的「显示背景图」把 backdrop 大图画在 .backgroundContainer /
+ *   .pageBackground（position:fixed + z-index 负值）上，这层夹在 html 画布
+ *   和 body 背景之间。若给 body 也设不透明背景色，body 的背景会在绘制顺序上
+ *   盖住那层 z-index 负值的 backdrop，导致背景图显示不出来。
+ *   因此：主题背景色只落在 html（画布）上，body 强制透明，让 backdrop 透出来。 */
+html {
   background-color: var(--aurora-bg) !important;
 }
 body {
+  background-color: transparent !important;
   font-family: var(--aurora-font-ui);
   color: var(--aurora-text);
 }
-/* 注意：不要覆盖 .backgroundContainer / .backdropContainer / .pageBackground /
-   .itemBackdrop 等 Emby 背景图层。它们承载「显示背景图」功能（backdrop 大图），
-   一旦用 --aurora-bg 纯色覆盖，Emby 的背景大图就会被盖住显示不出来。 */
+/* 浅色主题（snow / poster）：强制原生控件用浅色配色（滚动条/表单等） */
+.aurora-light {
+  color-scheme: light;
+}
+
+/* =========================================================================
+ * 浅色主题：强制深色文字（Emby 是深色应用，文本颜色硬编码为浅色，
+ * 换浅色主题后这些浅色文字在浅底上不可见，统一压成 --aurora-text）
+ * ======================================================================= */
+.aurora-light body {
+  color: var(--aurora-text);
+}
+.aurora-light .cardText,
+.aurora-light .cardText-secondary,
+.aurora-light .itemName,
+.aurora-light .itemMiscInfo,
+.aurora-light .itemMiscInfo div,
+.aurora-light .itemMiscInfo .mediaInfoItem,
+.aurora-light .mediaInfoItem,
+.aurora-light .itemOverview,
+.aurora-light .detailSectionTitle,
+.aurora-light .nameContainer,
+.aurora-light .itemTagline,
+.aurora-light .sectionTitle,
+.aurora-light .sectionTitleTextButton > h2,
+.aurora-light .listItem,
+.aurora-light .listItemBodyText,
+.aurora-light .listItem .secondary,
+.aurora-light .personCard .cardText,
+.aurora-light .fieldDescription,
+.aurora-light .dialogTitle,
+.aurora-light .formDialogHeader,
+.aurora-light .dialog .text,
+.aurora-light .toast,
+.aurora-light .notification,
+.aurora-light label,
+.aurora-light .fieldLabel,
+.aurora-light .paperLabel,
+.aurora-light .selectLabel,
+.aurora-light .inputLabel,
+.aurora-light h1,
+.aurora-light h2,
+.aurora-light h3,
+.aurora-light h4 {
+  color: var(--aurora-text) !important;
+}
+/* 顶栏/标题按钮（透明底，文字需随主题变深） */
+.aurora-light .pageTitle,
+.aurora-light .headerButton,
+.aurora-light .skinHeader .pageTitle,
+.aurora-light .skinHeader .headerButton,
+.aurora-light .button-flat {
+  color: var(--aurora-text) !important;
+}
+/* 页签 / 字母筛选 / 分页（透明底，非激活用次级色） */
+.aurora-light .emby-tab-button,
+.aurora-light .alphaPickerButton,
+.aurora-light .filterButton,
+.aurora-light .listPagingButton {
+  color: var(--aurora-text-dim) !important;
+}
+.aurora-light .emby-tab-button-active,
+.aurora-light .alphaPickerButton-selected {
+  color: var(--aurora-text) !important;
+}
+/* 类型标签（透明底描边） */
+.aurora-light .genreButton {
+  color: var(--aurora-text) !important;
+}
 
 /* 滚动条 */
 ::-webkit-scrollbar { width: 9px; height: 9px; }

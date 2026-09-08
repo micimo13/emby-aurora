@@ -29,7 +29,8 @@
       glassStrong: 'rgba(255,255,255,.92)', glassBorder: 'rgba(0,0,0,.1)',
       text: '#1d1d1f', textDim: '#6e6e73', accent: '#0066cc', accentSoft: 'rgba(0,102,204,.1)',
       gradient: '#0066cc', font: '-apple-system,"SF Pro Display","PingFang SC",sans-serif',
-      fontUi: '-apple-system,"SF Pro Text","PingFang SC","Microsoft YaHei",sans-serif', radius: '16px', gradOn: false
+      fontUi: '-apple-system,"SF Pro Text","PingFang SC","Microsoft YaHei",sans-serif', radius: '16px', gradOn: false,
+      light: true
     },
     space: {
       bg: '#0b1020', bgSoft: '#121a30', glass: 'rgba(255,255,255,.06)',
@@ -44,7 +45,8 @@
       glassStrong: 'rgba(243,239,230,.94)', glassBorder: 'rgba(20,18,16,.16)',
       text: '#141210', textDim: '#6b6257', accent: '#d8482a', accentSoft: 'rgba(216,72,42,.12)',
       gradient: '#d8482a', font: '"Helvetica Neue","PingFang SC","Microsoft YaHei",sans-serif',
-      fontUi: '"Helvetica Neue","PingFang SC","Microsoft YaHei",sans-serif', radius: '0px', gradOn: false
+      fontUi: '"Helvetica Neue","PingFang SC","Microsoft YaHei",sans-serif', radius: '0px', gradOn: false,
+      light: true
     }
   };
   var THEME_LABELS = { cinema: '影幕 · 黑金', snow: '雪白 · 极简', space: '深空 · 玻璃', poster: '画报 · 编辑' };
@@ -83,6 +85,8 @@
     root.style.setProperty('--aurora-font', v.font);
     root.style.setProperty('--aurora-font-ui', v.fontUi);
     root.style.setProperty('--aurora-radius', v.radius);
+    // 浅色主题打标：让 aurora.css 里 .aurora-light 的深色文字覆盖生效
+    root.classList.toggle('aurora-light', !!v.light);
   }
 
   /* ---- 自定义色相覆盖 ---- */

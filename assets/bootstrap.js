@@ -375,6 +375,7 @@
   /* =========================================================================
    * 6. 主题应用
    * ======================================================================= */
+  var LIGHT_THEMES = { snow: 1, poster: 1 }; // 浅色主题名（需打 aurora-light 标，压深文字）
   function applyTheme() {
     loadCSS('aurora-base', basePath + '/aurora.css');
     if (THEME.name && THEME.name !== 'default') {
@@ -383,6 +384,8 @@
     if (THEME.accent) {
       injectCSS('aurora-accent', ':root{--aurora-accent:' + THEME.accent + ';}');
     }
+    // 浅色主题打标：让 aurora.css 里 .aurora-light 的深色文字覆盖生效
+    doc.documentElement.classList.toggle('aurora-light', !!LIGHT_THEMES[THEME.name]);
   }
 
   /* =========================================================================
