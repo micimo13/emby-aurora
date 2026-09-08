@@ -142,7 +142,7 @@
     'padding:22px;transform:translateX(100%);transition:transform .32s cubic-bezier(.4,0,.2,1);',
     'overflow-y:auto;font-family:var(--aurora-font-ui);color:var(--aurora-text);}',
     '#aurora-settings-panel.show{transform:translateX(0);}',
-    '#aurora-settings-panel h3{margin:0 0 4px;font-size:17px;}',
+    '#aurora-settings-panel h3{margin:0 0 4px;font-size:17px;color:var(--aurora-text);}',
     '#aurora-settings-panel .sub{font-size:12px;color:var(--aurora-text-dim);margin-bottom:18px;}',
     '#aurora-settings-panel .close{position:absolute;top:16px;right:16px;width:30px;height:30px;',
     'border:none;border-radius:8px;background:rgba(255,255,255,.1);color:inherit;cursor:pointer;font-size:16px;}',
@@ -154,7 +154,7 @@
     '#aurora-settings-panel .theme:hover{transform:scale(1.05);}',
     '#aurora-settings-panel .theme.on{border-color:#fff;box-shadow:0 0 0 2px var(--aurora-accent);}',
     '#aurora-settings-panel .theme span{position:absolute;left:8px;bottom:6px;font-size:11px;',
-    'color:#fff;font-weight:700;text-shadow:0 1px 4px rgba(0,0,0,.6);}',
+    'color:#fff;font-weight:700;padding:2px 8px;border-radius:6px;background:rgba(0,0,0,.52);}',
     '#aurora-settings-panel .logos{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}',
     '#aurora-settings-panel .logo{aspect-ratio:10/3;border-radius:8px;cursor:pointer;border:2px solid transparent;' +
     'background:linear-gradient(135deg,#1a1a22,#0e0e14);display:flex;align-items:center;justify-content:center;' +
@@ -180,7 +180,7 @@
     '#aurora-settings-panel .toggle input:checked+.knob::before{transform:translateX(19px);}',
     '#aurora-settings-panel .hex{margin-top:14px;padding:10px 12px;border-radius:10px;',
     'border:1px solid var(--aurora-glass-border);font-family:monospace;font-size:14px;font-weight:700;',
-    'display:flex;align-items:center;gap:10px;}',
+    'color:var(--aurora-text);display:flex;align-items:center;gap:10px;}',
     '#aurora-settings-panel .hex .dot{width:26px;height:26px;border-radius:8px;background:var(--aurora-gradient);flex:none;}',
     '#aurora-settings-panel .reset{width:100%;margin-top:12px;padding:10px;border-radius:10px;border:1px solid var(--aurora-glass-border);',
     'background:rgba(255,255,255,.05);color:inherit;cursor:pointer;font-size:13px;}',
